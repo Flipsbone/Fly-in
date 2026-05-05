@@ -1,0 +1,5 @@
+LICENSE
+.venv
+__pycache__
+.vscode/
+.github/
