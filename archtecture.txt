@@ -1,0 +1,36 @@
+fly-in/
+│
+├── Makefile              # Obligatoire : règles install, run, debug, clean, lint
+├── README.md             # Obligatoire : avec la ligne d'intro 42, description, etc.
+├── .gitignore            # Pour exclure les fichiers pycache, mypy_cache, etc.
+├── requirements.txt      # (ou pyproject.toml) Pour lister tes dépendances (si tu utilises uv, pip, etc.)
+│
+├── main.py               # Le point d'entrée de ton programme (qui gère les arguments et lance le reste)
+│
+├── src/                  # Le cœur de ton code source
+│   ├── __init__.py
+│   ├── parser/           
+│   │   ├── __init__.py
+│   │   ├── map_parser.py # Gère la lecture du fichier, la syntaxe, et lève les erreurs[cite: 1]
+│   │   └── exceptions.py # Tes classes d'erreurs personnalisées (ex: ParsingError, InvalidZoneError)
+│   │
+│   ├── models/           # Tes classes de données (la représentation de ton graphe)
+│   │   ├── __init__.py
+│   │   ├── zone.py       # Classe Zone (coordonnées, capacité, type, couleur)
+│   │   ├── connection.py # Classe Connection (noeuds reliés, capacité max)
+│   │   ├── drone.py      # Classe Drone (id, position actuelle, état)
+│   │   └── network.py    # Classe Graphe/Réseau (qui agglomère les zones et connexions)
+│   │
+│   ├── engine/           
+│   │   ├── __init__.py
+│   │   ├── simulation.py # Gère les tours de jeu, les règles d'occupation et les mouvements[cite: 1]
+│   │   └── pathfinding.py# Ton/tes algorithme(s) de routage (ex: BFS, A*, etc.)[cite: 1]
+│   │
+│   └── ui/               
+│       ├── __init__.py
+│       └── display.py    # Gère le retour visuel (couleurs dans le terminal ou GUI)[cite: 1]
+│
+└── tests/                # Recommandé pour tester tes fonctions avec pytest ou unittest[cite: 1]
+    ├── test_parser.py
+    ├── test_pathfinding.py
+    └── maps/             # Un dossier pour ranger tes fichiers de test .txt de maps
