@@ -63,15 +63,27 @@ def main(map_file: TextIO) -> int:
                     print(f"Invalid format line: {clean_line} must be : "
                           "Connection1-Connection2 only ", file=sys.stderr)
                     return (-1)
-                connections = connections_data[0].split("-")
-                nb_connections = len(connections)
+                list_connections = connections_data[0].split("-")
+                nb_connections = len(list_connections)
                 if nb_connections > 2:
                     print(f"Invalid format line: {clean_line} must be : "
                           "Connection1-Connection2 only ", file=sys.stderr)
                     return (-1)
-                validate_connection = Connection_Approval.model_validate(
-                    connections)
-                print(validate_connection)
+                try:
+                    connections = {
+                        "link_1": list_connections[0],
+                        "link_2": list_connections[1],
+                        "metadata": connections_data[1] if len(connections_data) > 1 else ""
+                    }
+                    validate_connection = Connection_Approval.model_validate(
+                        connections)
+                    print(validate_connection)
+                except ValidationError as e:
+                    for error in e.errors():
+                        msg = error['msg']
+                        print(f"Parsing Error on line '{clean_line}': "
+                              f"{msg}", file=sys.stderr)
+                    return (-1)
             case _:
                 print(f"Invalid format line: {clean_line}", file=sys.stderr)
                 return (-1)
@@ -80,7 +92,7 @@ def main(map_file: TextIO) -> int:
 
 if __name__ == "__main__":
     try:
-        with open("maps/easy/01_linear_path.txt", "r") as map_file:
+        with open("maps/easy/02_simple_fork.txt", "r") as map_file:
             main(map_file)
     except PermissionError as e:
         print(f"ERROR: {e}.", file=sys.stderr)
