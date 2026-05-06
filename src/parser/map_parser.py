@@ -1,7 +1,12 @@
 import sys
 from typing import TextIO
 
-from src.parser.map_validator import Drone_Approval, Zone_Approval
+from src.parser.map_validator import (
+    Drone_Approval,
+    Zone_Approval,
+    Connection_Approval
+)
+from pydantic import ValidationError
 
 
 def main(map_file: TextIO) -> int:
@@ -17,6 +22,7 @@ def main(map_file: TextIO) -> int:
             print(f"Invalid format in line: {clean_line}", file=sys.stderr)
             return (-1)
         match extract_value[0].strip():
+
             case "nb_drones":
                 try:
                     value = int(extract_value[1].strip())
@@ -27,6 +33,7 @@ def main(map_file: TextIO) -> int:
                     print(f"Parsing error: drone '{extract_value[1].strip()}' "
                           f"must be integer > 0", file=sys.stderr)
                     return (-1)
+
             case "start_hub" | "hub" | "end_hub":
                 parts = extract_value[1].strip().split(maxsplit=3)
                 if len(parts) < 3:
@@ -43,13 +50,28 @@ def main(map_file: TextIO) -> int:
                     }
                     validate_zone = Zone_Approval.model_validate(zone_data)
                     print(validate_zone)
-                except ValueError:
-                    print(f"Invalid format line: {clean_line} must be : "
-                          "<name> <x> <y> [metadata](optional)",
-                          file=sys.stderr)
+                except ValidationError as e:
+                    for error in e.errors():
+                        msg = error['msg']
+                        print(f"Parsing Error on line '{clean_line}': "
+                              f"{msg}", file=sys.stderr)
                     return (-1)
+
             case "connection":
-                print("connection")
+                connections_data = extract_value[1].strip().split(maxsplit=2)
+                if "-" not in connections_data[0]:
+                    print(f"Invalid format line: {clean_line} must be : "
+                          "Connection1-Connection2 only ", file=sys.stderr)
+                    return (-1)
+                connections = connections_data[0].split("-")
+                nb_connections = len(connections)
+                if nb_connections > 2:
+                    print(f"Invalid format line: {clean_line} must be : "
+                          "Connection1-Connection2 only ", file=sys.stderr)
+                    return (-1)
+                validate_connection = Connection_Approval.model_validate(
+                    connections)
+                print(validate_connection)
             case _:
                 print(f"Invalid format line: {clean_line}", file=sys.stderr)
                 return (-1)
