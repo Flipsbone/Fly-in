@@ -18,6 +18,47 @@ class Zone_Approval(BaseModel):
             raise ValueError("zone names cannot contain dashes")
         return name
 
+    @model_validator(mode="before")
+    @classmethod
+    def extract_metadata(cls, data: dict) -> dict:
+        metadata_str = data.get("metadata", "")
+        if not metadata_str:
+            return data
+
+        if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
+            raise ValueError("Metadata must be enclosed in []")
+
+        metadata_str_clean = metadata_str.strip("[]")
+        clean_metadata = metadata_str_clean.strip().split()
+        zone_metadata: dict[str, str | int] = {}
+        allowed_keys = ["color", "max_drones", "zone"]
+        allowed_color = ["green", "yellow", "red", "blue", "red", "gray"]
+        allowed_zone = ["priority", "restricted", "normal", "blocked"]
+        for item in clean_metadata:
+            if "=" not in item:
+                raise ValueError("Metadata format must be key=value"
+                                 "(e.g., [max_link_capacity=1])")
+            key, value_str = item.split("=", 1)
+            key = key.strip().lower()
+            if key not in allowed_keys:
+                raise ValueError(f"Unknown metadata key: '{key}'")
+            value_str = value_str.strip().lower()
+            match key:
+                case "color":
+                    if value_str not in allowed_color:
+                        raise ValueError(f"Unknown metadata value: '{value_str}'")
+                case "max_drones":
+                    if not isinstance(int, value_str):
+                        raise ValueError(f"metadata value: '{value_str}' must be >= 1")
+                case "zone":
+                    if value_str not in allowed_zone:
+                        raise ValueError(f"Unknown metadata value: '{value_str}'")
+            if key in zone_metadata:
+                raise ValueError(f"{key} cant be present twice")
+            zone_metadata[key] = value_str
+        print(zone_metadata)
+        return data
+
 
 class Connection_Approval(BaseModel):
     link_1: str

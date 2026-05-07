@@ -53,7 +53,7 @@ def main(map_file: TextIO) -> int:
                     start_hub += 1
                 if extract_value[0].strip() == "end_hub":
                     end_hub += 1
-                if start_hub | end_hub > 1:
+                if start_hub > 1 or end_hub > 1:
                     raise ValueError(f"--- line {i} --- \n"
                                      f"There must be exactly one"
                                      f"'{extract_value[0]}' be write")
@@ -119,6 +119,14 @@ def main(map_file: TextIO) -> int:
                 print(f"--- line {i} --- \n"
                       f"Invalid format line: {clean_line}", file=sys.stderr)
                 return (-1)
+    if not find_drones_line:
+        raise ValueError("nb_drones must be at "
+                         "the beginning of the file")
+    if start_hub == 0:
+        raise ValueError("There must be exactly one start_hub")
+    if end_hub == 0:
+        raise ValueError("There must be exactly one end_hub")
+
     return (0)
 
 
