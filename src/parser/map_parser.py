@@ -10,6 +10,9 @@ from pydantic import ValidationError
 
 
 def main(map_file: TextIO) -> int:
+    find_drones_line = False
+    start_hub = 0
+    end_hub = 0
     for i, line in enumerate(map_file):
         i += 1
         clean_line = line.strip()
@@ -27,6 +30,10 @@ def main(map_file: TextIO) -> int:
         match extract_value[0].strip():
 
             case "nb_drones":
+                if find_drones_line:
+                    raise ValueError(f"Line {i} Duplicate nb_drones")
+                if not find_drones_line:
+                    find_drones_line = True
                 try:
                     value = int(extract_value[1].strip())
                     validate_drone = Drone_Approval(nb_drones=value)
@@ -39,6 +46,17 @@ def main(map_file: TextIO) -> int:
                     return (-1)
 
             case "start_hub" | "hub" | "end_hub":
+                if not find_drones_line:
+                    raise ValueError("nb_drones must be at "
+                                     "the beginning of the file")
+                if extract_value[0].strip() == "start_hub":
+                    start_hub += 1
+                if extract_value[0].strip() == "end_hub":
+                    end_hub += 1
+                if start_hub | end_hub > 1:
+                    raise ValueError(f"--- line {i} --- \n"
+                                     f"There must be exactly one"
+                                     f"'{extract_value[0]}' be write")
                 parts = extract_value[1].strip().split(maxsplit=3)
                 if len(parts) < 3:
                     print(f"--- line {i} --- \n"
@@ -64,6 +82,9 @@ def main(map_file: TextIO) -> int:
                     return (-1)
 
             case "connection":
+                if not find_drones_line:
+                    raise ValueError("nb_drones must be at "
+                                     "the beginning of the file")
                 connections_data = extract_value[1].strip().split(maxsplit=2)
                 if "-" not in connections_data[0]:
                     print(f"--- line {i} --- \n"
@@ -110,4 +131,4 @@ if __name__ == "__main__":
     except FileNotFoundError as e:
         print(f"ERROR: {e} not found.", file=sys.stderr)
     except Exception as e:
-        print(f"RESPONSE: Unexpected anomaly: {e}", file=sys.stderr)
+        print(f"ERROR: {e}", file=sys.stderr)
