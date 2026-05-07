@@ -10,16 +10,19 @@ from pydantic import ValidationError
 
 
 def main(map_file: TextIO) -> int:
-    for line in map_file:
+    for i, line in enumerate(map_file):
+        i += 1
         clean_line = line.strip()
         if clean_line == "" or clean_line.startswith("#"):
             continue
         if ":" not in clean_line:
-            print(f"Invalid format line: {clean_line}", file=sys.stderr)
+            print(f"--- line {i} --- \n"
+                  f"Invalid format : {clean_line}", file=sys.stderr)
             return (-1)
         extract_value = clean_line.split(":")
         if len(extract_value) > 2:
-            print(f"Invalid format in line: {clean_line}", file=sys.stderr)
+            print(f"--- line {i} --- \n"
+                  f"Invalid format in : {clean_line}", file=sys.stderr)
             return (-1)
         match extract_value[0].strip():
 
@@ -30,14 +33,16 @@ def main(map_file: TextIO) -> int:
                     number_drones = validate_drone.nb_drones
                     print(number_drones)
                 except ValueError:
-                    print(f"Parsing error: drone '{extract_value[1].strip()}' "
+                    print(f"--- line {i} --- \n"
+                          f"Parsing error: drone '{extract_value[1].strip()}' "
                           f"must be integer > 0", file=sys.stderr)
                     return (-1)
 
             case "start_hub" | "hub" | "end_hub":
                 parts = extract_value[1].strip().split(maxsplit=3)
                 if len(parts) < 3:
-                    print(f"Invalid format line: {clean_line} must be : "
+                    print(f"--- line {i} --- \n"
+                          f"Invalid format line: {clean_line} must be : "
                           "<name> <x> <y> [metadata](optional)",
                           file=sys.stderr)
                     return (-1)
@@ -53,27 +58,31 @@ def main(map_file: TextIO) -> int:
                 except ValidationError as e:
                     for error in e.errors():
                         msg = error['msg']
-                        print(f"Parsing Error on line '{clean_line}': "
+                        print(f"--- line {i} --- \n"
+                              f"Parsing Error on line {i}'{clean_line}': "
                               f"{msg}", file=sys.stderr)
                     return (-1)
 
             case "connection":
                 connections_data = extract_value[1].strip().split(maxsplit=2)
                 if "-" not in connections_data[0]:
-                    print(f"Invalid format line: {clean_line} must be : "
+                    print(f"--- line {i} --- \n"
+                          f"Invalid format line: {clean_line} must be : "
                           "Connection1-Connection2 only ", file=sys.stderr)
                     return (-1)
                 list_connections = connections_data[0].split("-")
                 nb_connections = len(list_connections)
                 if nb_connections > 2:
-                    print(f"Invalid format line: {clean_line} must be : "
+                    print(f"--- line {i} --- \n"
+                          f"Invalid format line: {clean_line} must be : "
                           "Connection1-Connection2 only ", file=sys.stderr)
                     return (-1)
                 try:
                     connections = {
                         "link_1": list_connections[0],
                         "link_2": list_connections[1],
-                        "metadata": connections_data[1] if len(connections_data) > 1 else ""
+                        "metadata": connections_data[1] if len(
+                            connections_data) > 1 else ""
                     }
                     validate_connection = Connection_Approval.model_validate(
                         connections)
@@ -81,18 +90,20 @@ def main(map_file: TextIO) -> int:
                 except ValidationError as e:
                     for error in e.errors():
                         msg = error['msg']
-                        print(f"Parsing Error on line '{clean_line}': "
+                        print(f"--- line {i} --- \n"
+                              f"Parsing Error on line '{clean_line}': "
                               f"{msg}", file=sys.stderr)
                     return (-1)
             case _:
-                print(f"Invalid format line: {clean_line}", file=sys.stderr)
+                print(f"--- line {i} --- \n"
+                      f"Invalid format line: {clean_line}", file=sys.stderr)
                 return (-1)
     return (0)
 
 
 if __name__ == "__main__":
     try:
-        with open("maps/easy/02_simple_fork.txt", "r") as map_file:
+        with open("maps/hard/02_capacity_hell.txt", "r") as map_file:
             main(map_file)
     except PermissionError as e:
         print(f"ERROR: {e}.", file=sys.stderr)

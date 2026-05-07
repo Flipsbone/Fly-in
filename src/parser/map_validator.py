@@ -36,7 +36,8 @@ class Connection_Approval(BaseModel):
 
         clean_meta = metadata_str.strip("[]")
         if "=" not in clean_meta:
-            raise ValueError("Metadata format must be key=value (e.g., [max_link_capacity=1])")
+            raise ValueError("Metadata format must be key=value"
+                             "(e.g., [max_link_capacity=1])")
 
         key, value_str = clean_meta.split("=", 1)
         key = key.strip()
