@@ -10,6 +10,9 @@ class Zone_Approval(BaseModel):
     x: int
     y: int
     metadata: str = ""
+    zone: str = "normal"
+    color: str = "blue"
+    max_drones: int = 1
 
     @field_validator('name')
     @classmethod
@@ -32,12 +35,11 @@ class Zone_Approval(BaseModel):
         clean_metadata = metadata_str_clean.strip().split()
         zone_metadata: dict[str, str | int] = {}
         allowed_keys = ["color", "max_drones", "zone"]
-        allowed_color = ["green","orange", "yellow", "red", "blue", "red", "gray", "cyan"]
         allowed_zone = ["priority", "restricted", "normal", "blocked"]
         for item in clean_metadata:
             if "=" not in item:
                 raise ValueError("Metadata format must be key=value"
-                                 "(e.g., [max_link_capacity=1])")
+                                 "(e.g., [color=red])")
             key, value_str = item.split("=", 1)
             key = key.strip().lower()
             value_str = value_str.strip().lower()
@@ -47,12 +49,11 @@ class Zone_Approval(BaseModel):
                 raise ValueError(f"{key} cant be present twice")
             match key:
                 case "color":
-                    if value_str not in allowed_color:
-                        raise ValueError(f"Unknown metadata value: '{value_str}'")
                     zone_metadata[key] = value_str
                 case "zone":
                     if value_str not in allowed_zone:
-                        raise ValueError(f"Unknown metadata value: '{value_str}'")
+                        raise ValueError("Unknown metadata value: "
+                                         f"'{value_str}'")
                     zone_metadata[key] = value_str
                 case "max_drones":
                     try:
@@ -61,8 +62,10 @@ class Zone_Approval(BaseModel):
                             raise ValueError
                         zone_metadata[key] = val_int
                     except ValueError:
-                        raise ValueError(f"metadata value: '{value_str}' must be >= 1")
-        print(zone_metadata)
+                        raise ValueError(f"metadata value: '{value_str}' "
+                                         "must be >= 1")
+            data.update(zone_metadata)
+            data.pop("metadata", None)
         return data
 
 
