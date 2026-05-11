@@ -77,7 +77,7 @@ def main(map_file: TextIO) -> int:
                     for error in e.errors():
                         msg = error['msg']
                         print(f"--- line {i} --- \n"
-                              f"Parsing Error on line {i}'{clean_line}': "
+                              f"Parsing Error : '{clean_line}' "
                               f"{msg}", file=sys.stderr)
                     return (-1)
 

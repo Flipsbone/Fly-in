@@ -9,7 +9,6 @@ class Zone_Approval(BaseModel):
     name: str
     x: int
     y: int
-    metadata: str = ""
     zone: str = "normal"
     color: str = "blue"
     max_drones: int = 1
