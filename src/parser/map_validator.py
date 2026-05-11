@@ -13,6 +13,22 @@ class Zone_Approval(BaseModel):
     color: str | None = None
     max_drones: int = 1
 
+    @classmethod
+    def _check_bracket(cls, metadata_str: dict) -> bool:
+        seen: dict[str, str] = {
+            "]": "[",
+        }
+        stack = []
+        count: int = 0
+        for letter in metadata_str:
+            if letter in "[":
+                stack.append(letter)
+                count += 1
+            elif letter in seen:
+                if not stack or stack.pop() != seen[letter] or count > 1:
+                    return False
+        return True
+
     @field_validator('name')
     @classmethod
     def name_must_not_contain_dash(cls, name: str) -> str:
@@ -26,10 +42,10 @@ class Zone_Approval(BaseModel):
         metadata_str = data.get("metadata", "")
         if not metadata_str:
             return data
-
         if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
             raise ValueError("Metadata must be enclosed in []")
-
+        if not cls._check_bracket(metadata_str):
+            raise ValueError("Metada must be enclosed with exactly by one []")
         metadata_str_clean = metadata_str.strip("[]")
         clean_metadata = metadata_str_clean.strip().split()
         zone_metadata: dict[str, str | int] = {}

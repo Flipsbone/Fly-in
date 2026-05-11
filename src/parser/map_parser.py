@@ -6,6 +6,9 @@ from src.parser.map_validator import (
     Zone_Approval,
     Connection_Approval
 )
+
+from src.models.network import Network
+
 from pydantic import ValidationError
 
 
@@ -13,6 +16,7 @@ def main(map_file: TextIO) -> int:
     find_drones_line = False
     start_hub = 0
     end_hub = 0
+    my_map = Network()
     for i, line in enumerate(map_file):
         i += 1
         clean_line = line.strip()
@@ -37,8 +41,7 @@ def main(map_file: TextIO) -> int:
                 try:
                     value = int(extract_value[1].strip())
                     validate_drone = Drone_Approval(nb_drones=value)
-                    number_drones = validate_drone.nb_drones
-                    print(number_drones)
+                    my_map.nb_drones = validate_drone.nb_drones
                 except ValueError:
                     print(f"--- line {i} --- \n"
                           f"Parsing error: drone '{extract_value[1].strip()}' "
@@ -72,7 +75,11 @@ def main(map_file: TextIO) -> int:
                         "metadata": parts[3] if len(parts) > 3 else ""
                     }
                     validate_zone = Zone_Approval.model_validate(zone_data)
-                    print(validate_zone)
+                    my_map.zones[validate_zone.name] = validate_zone
+                    if extract_value[0].strip() == "start_hub":
+                        my_map.start_node = validate_zone
+                    if extract_value[0].strip() == "end_hub":
+                        my_map.end_node = validate_zone
                 except ValidationError as e:
                     for error in e.errors():
                         msg = error['msg']
@@ -107,7 +114,7 @@ def main(map_file: TextIO) -> int:
                     }
                     validate_connection = Connection_Approval.model_validate(
                         connections)
-                    print(validate_connection)
+                    my_map.connections.append(validate_connection)
                 except ValidationError as e:
                     for error in e.errors():
                         msg = error['msg']
