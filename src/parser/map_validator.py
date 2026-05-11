@@ -10,7 +10,7 @@ class Zone_Approval(BaseModel):
     x: int
     y: int
     zone: str = "normal"
-    color: str = "blue"
+    color: str | None = None
     max_drones: int = 1
 
     @field_validator('name')
@@ -48,6 +48,11 @@ class Zone_Approval(BaseModel):
                 raise ValueError(f"{key} cant be present twice")
             match key:
                 case "color":
+                    value_isalpha = value_str.isalpha()
+                    if not value_isalpha:
+                        raise ValueError(f"metadata value: '{value_str}' "
+                                         "is not valid single-word strings"
+                                         " (e.g., red, blue, gray).")
                     zone_metadata[key] = value_str
                 case "zone":
                     if value_str not in allowed_zone:
@@ -55,16 +60,13 @@ class Zone_Approval(BaseModel):
                                          f"'{value_str}'")
                     zone_metadata[key] = value_str
                 case "max_drones":
-                    try:
-                        val_int = int(value_str)
-                        if val_int < 1:
-                            raise ValueError
-                        zone_metadata[key] = val_int
-                    except ValueError:
+                    val_int = int(value_str)
+                    if val_int < 1:
                         raise ValueError(f"metadata value: '{value_str}' "
                                          "must be >= 1")
-            data.update(zone_metadata)
-            data.pop("metadata", None)
+                    zone_metadata[key] = val_int
+        data.update(zone_metadata)
+        data.pop("metadata", None)
         return data
 
 
