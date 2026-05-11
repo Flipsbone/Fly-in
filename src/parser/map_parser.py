@@ -1,5 +1,6 @@
 import sys
 from typing import TextIO
+from pydantic import ValidationError
 
 from src.parser.map_validator import (
     Drone_Approval,
@@ -9,10 +10,8 @@ from src.parser.map_validator import (
 
 from src.models.network import Network
 
-from pydantic import ValidationError
 
-
-def main(map_file: TextIO) -> int:
+def parse_map(map_file: TextIO) -> Network:
     find_drones_line = False
     start_hub = 0
     end_hub = 0
@@ -23,14 +22,13 @@ def main(map_file: TextIO) -> int:
         if clean_line == "" or clean_line.startswith("#"):
             continue
         if ":" not in clean_line:
-            print(f"--- line {i} --- \n"
-                  f"Invalid format : {clean_line}", file=sys.stderr)
-            return (-1)
+            raise ValueError(f"--- line {i} --- \n"
+                             f"Invalid format : {clean_line}")
         extract_value = clean_line.split(":")
         if len(extract_value) > 2:
-            print(f"--- line {i} --- \n"
-                  f"Invalid format in : {clean_line}", file=sys.stderr)
-            return (-1)
+            raise ValueError(f"--- line {i} --- \n"
+                             f"Invalid format in : {clean_line}")
+
         match extract_value[0].strip():
 
             case "nb_drones":
@@ -43,10 +41,9 @@ def main(map_file: TextIO) -> int:
                     validate_drone = Drone_Approval(nb_drones=value)
                     my_map.nb_drones = validate_drone.nb_drones
                 except ValueError:
-                    print(f"--- line {i} --- \n"
-                          f"Parsing error: drone '{extract_value[1].strip()}' "
-                          f"must be integer > 0", file=sys.stderr)
-                    return (-1)
+                    raise ValueError(f"--- line {i} --- \n"
+                                     f"Parsing error: drone '{extract_value[1].strip()}' "
+                                     f"must be integer > 0")
 
             case "start_hub" | "hub" | "end_hub":
                 if not find_drones_line:
@@ -62,11 +59,9 @@ def main(map_file: TextIO) -> int:
                                      f"'{extract_value[0]}' be write")
                 parts = extract_value[1].strip().split(maxsplit=3)
                 if len(parts) < 3:
-                    print(f"--- line {i} --- \n"
-                          f"Invalid format line: {clean_line} must be : "
-                          "<name> <x> <y> [metadata](optional)",
-                          file=sys.stderr)
-                    return (-1)
+                    raise ValueError (f"--- line {i} --- \n"
+                                      f"Invalid format line: {clean_line} must be : "
+                                      "<name> <x> <y> [metadata](optional)")
                 try:
                     zone_data = {
                         "name": parts[0],
@@ -81,12 +76,8 @@ def main(map_file: TextIO) -> int:
                     if extract_value[0].strip() == "end_hub":
                         my_map.end_node = validate_zone
                 except ValidationError as e:
-                    for error in e.errors():
-                        msg = error['msg']
-                        print(f"--- line {i} --- \n"
-                              f"Parsing Error : '{clean_line}' "
-                              f"{msg}", file=sys.stderr)
-                    return (-1)
+                    msg = e.errors()[0]['msg']
+                    raise ValueError(f"--- line {i} --- \n Parsing Error : {msg}")
 
             case "connection":
                 if not find_drones_line:
@@ -94,17 +85,17 @@ def main(map_file: TextIO) -> int:
                                      "the beginning of the file")
                 connections_data = extract_value[1].strip().split(maxsplit=2)
                 if "-" not in connections_data[0]:
-                    print(f"--- line {i} --- \n"
-                          f"Invalid format line: {clean_line} must be : "
-                          "Connection1-Connection2 only ", file=sys.stderr)
-                    return (-1)
+                    raise ValueError (f"--- line {i} --- \n"
+                                      f"Invalid format line: {clean_line} must be : "
+                                      "Connection1-Connection2 only ")
+ 
                 list_connections = connections_data[0].split("-")
                 nb_connections = len(list_connections)
                 if nb_connections > 2:
-                    print(f"--- line {i} --- \n"
-                          f"Invalid format line: {clean_line} must be : "
-                          "Connection1-Connection2 only ", file=sys.stderr)
-                    return (-1)
+                    raise ValueError (f"--- line {i} --- \n"
+                                      f"Invalid format line: {clean_line} must be : "
+                                      "Connection1-Connection2 only ")
+
                 try:
                     connections = {
                         "link_1": list_connections[0],
@@ -116,34 +107,18 @@ def main(map_file: TextIO) -> int:
                         connections)
                     my_map.connections.append(validate_connection)
                 except ValidationError as e:
-                    for error in e.errors():
-                        msg = error['msg']
-                        print(f"--- line {i} --- \n"
-                              f"Parsing Error on line '{clean_line}': "
-                              f"{msg}", file=sys.stderr)
-                    return (-1)
+                    msg = e.errors()[0]['msg']
+                    raise ValueError(f"--- line {i} --- \n Parsing Error : {msg}")
+
             case _:
-                print(f"--- line {i} --- \n"
-                      f"Invalid format line: {clean_line}", file=sys.stderr)
-                return (-1)
+                raise ValueError (f"--- line {i} --- \n"
+                                  f"Invalid format line: {clean_line}")
+
     if not find_drones_line:
         raise ValueError("nb_drones must be at "
                          "the beginning of the file")
-    if start_hub == 0:
-        raise ValueError("There must be exactly one start_hub")
-    if end_hub == 0:
-        raise ValueError("There must be exactly one end_hub")
 
-    return (0)
+    if start_hub != 1 or end_hub != 1:
+        raise ValueError("Map must have exactly one start_hub and one end_hub")
 
-
-if __name__ == "__main__":
-    try:
-        with open("maps/hard/02_capacity_hell.txt", "r") as map_file:
-            main(map_file)
-    except PermissionError as e:
-        print(f"ERROR: {e}.", file=sys.stderr)
-    except FileNotFoundError as e:
-        print(f"ERROR: {e} not found.", file=sys.stderr)
-    except Exception as e:
-        print(f"ERROR: {e}", file=sys.stderr)
+    return my_map

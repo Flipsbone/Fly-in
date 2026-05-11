@@ -5,10 +5,10 @@ fly-in/
 ├── .gitignore            # Pour exclure les fichiers pycache, mypy_cache, etc.
 ├── requirements.txt      # (ou pyproject.toml) Pour lister tes dépendances (si tu utilises uv, pip, etc.)
 │
-├── main.py               # Le point d'entrée de ton programme (qui gère les arguments et lance le reste)
 │
 ├── src/                  # Le cœur de ton code source
 │   ├── __init__.py
+    ├── __main__.py       # Le point d'entrée de ton programme (qui gère les arguments et lance le reste)
 │   ├── parser/           
 │   │   ├── __init__.py
 │   │   ├── map_parser.py # Gère la lecture du fichier, la syntaxe, et lève les erreurs[cite: 1]
