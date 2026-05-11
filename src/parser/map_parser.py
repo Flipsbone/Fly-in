@@ -103,8 +103,12 @@ def parse_map(map_file: TextIO) -> Network:
                         "metadata": connections_data[1] if len(
                             connections_data) > 1 else ""
                     }
+                    if not list_connections[0] in my_map.zones or not list_connections[1] in my_map.zones:
+                        raise ValueError (f"--- line {i} --- \n"
+                                          "Connections must link only previously defined zones using")
                     validate_connection = Connection_Approval.model_validate(
                         connections)
+                    #BEFORE ADDING, CHECK IF IT EXISTS IN THE ORDER LINK1 LINK2 OR LINK2 LINK1 IN MYMAP.CONNECTIONS.KEYS
                     my_map.connections.append(validate_connection)
                 except ValidationError as e:
                     msg = e.errors()[0]['msg']
