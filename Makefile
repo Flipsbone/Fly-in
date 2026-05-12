@@ -30,6 +30,9 @@ lint-strict:
 	uv run flake8 $(SRC)
 	uv run mypy --strict $(SRC)
 
+test:
+	uv run python -m pytest tests/ -v
+
 clean:
 	@echo "Cleaning up..."
 	rm -rf .mypy_cache \

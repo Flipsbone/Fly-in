@@ -33,3 +33,6 @@ jobs:
 
       - name: Run Flake8
         run: uv run flake8 .
+
+      - name: Run Pytest
+        run: uv run pytest tests/ -v
