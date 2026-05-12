@@ -3,7 +3,7 @@ name = "fly-in"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.13.4",
 ]
@@ -11,6 +11,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "flake8>=7.3.0",
+    "flake8-pyproject>=1.2.4",
     "mypy>=2.1.0",
 ]
 
@@ -19,8 +20,9 @@ exclude = [
     '^\\.venv/',
 ]
 
-[flake8]
-exclude = 
-    .venv,
-    .git,
-    __pycache__
+[tool.flake8]
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__"
+]
