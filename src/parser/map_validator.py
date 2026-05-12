@@ -13,6 +13,7 @@ class Zone_Approval(BaseModel):
     zone: str = "normal"
     color: str | None = None
     max_drones: int = 1
+    line: int
 
     @classmethod
     def _check_bracket(cls, metadata_str: str) -> bool:
