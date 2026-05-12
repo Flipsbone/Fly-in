@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import Any
 
 
 class Drone_Approval(BaseModel):
@@ -14,7 +15,7 @@ class Zone_Approval(BaseModel):
     max_drones: int = 1
 
     @classmethod
-    def _check_bracket(cls, metadata_str: dict) -> bool:
+    def _check_bracket(cls, metadata_str: str) -> bool:
         seen: dict[str, str] = {
             "]": "[",
         }
@@ -38,49 +39,71 @@ class Zone_Approval(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def extract_metadata(cls, data: dict) -> dict:
-        metadata_str = data.get("metadata", "")
+    def extract_metadata(cls, data: dict[str, Any]) -> dict[str, Any]:
+        metadata_str: str = data.get("metadata", "")
+
         if not metadata_str:
             return data
+
         if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
             raise ValueError("Metadata must be enclosed in []")
+
         if not cls._check_bracket(metadata_str):
             raise ValueError("Metada must be enclosed with exactly by one []")
-        metadata_str_clean = metadata_str.strip("[]")
-        clean_metadata = metadata_str_clean.strip().split()
+
+        metadata_content: str = metadata_str.strip("[]")
+        metadata_items: list[str] = metadata_content.strip().split()
         zone_metadata: dict[str, str | int] = {}
-        allowed_keys = ["color", "max_drones", "zone"]
-        allowed_zone = ["priority", "restricted", "normal", "blocked"]
-        for item in clean_metadata:
+
+        allowed_keys: set[str] = {
+            "color", "max_drones", "zone"}
+        allowed_zone: set[str] = {
+            "priority", "restricted", "normal", "blocked"}
+
+        for item in metadata_items:
             if "=" not in item:
                 raise ValueError("Metadata format must be key=value"
                                  "(e.g., [color=red])")
+
             key, value_str = item.split("=", 1)
-            key = key.strip().lower()
-            value_str = value_str.strip().lower()
+            key = key.lower()
+            value_str = value_str.lower()
+
             if key not in allowed_keys:
                 raise ValueError(f"Unknown metadata key: '{key}'")
+
             if key in zone_metadata:
                 raise ValueError(f"{key} cant be present twice")
+
             match key:
                 case "color":
-                    value_isalpha = value_str.isalpha()
+                    value_isalpha: bool = value_str.isalpha()
                     if not value_isalpha:
                         raise ValueError(f"metadata value: '{value_str}' "
                                          "is not valid single-word strings"
                                          " (e.g., red, blue, gray).")
+
                     zone_metadata[key] = value_str
+
                 case "zone":
                     if value_str not in allowed_zone:
                         raise ValueError("Unknown metadata value: "
                                          f"'{value_str}'")
+
                     zone_metadata[key] = value_str
+
                 case "max_drones":
-                    val_int = int(value_str)
+                    try:
+                        val_int: int = int(value_str)
+                    except ValueError:
+                        raise ValueError(f"max_drone value '{value_str}' "
+                                         "must be an integer")
                     if val_int < 1:
                         raise ValueError(f"metadata value: '{value_str}' "
                                          "must be >= 1")
+
                     zone_metadata[key] = val_int
+
         data.update(zone_metadata)
         data.pop("metadata", None)
         return data
@@ -93,32 +116,33 @@ class Connection_Approval(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def extract_metadata(cls, data: dict) -> dict:
-        metadata_str = data.get("metadata", "")
+    def extract_metadata(cls, data: dict[str, Any]) -> dict:
+        metadata_str: str = data.get("metadata", "")
         if not metadata_str:
             return data
 
         if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
             raise ValueError("Metadata must be enclosed in []")
 
-        clean_meta = metadata_str.strip("[]")
-        if "=" not in clean_meta:
+        metadata_content: str = metadata_str.strip("[]")
+        if "=" not in metadata_content:
             raise ValueError("Metadata format must be key=value"
                              "(e.g., [max_link_capacity=1])")
 
-        key, value_str = clean_meta.split("=", 1)
-        key = key.strip()
-        value_str = value_str.strip()
+        key, value_str = metadata_content.split("=", 1)
+        key = key.strip().lower()
+        max_drone_value_str = value_str.strip()
 
         if key != "max_link_capacity":
             raise ValueError(f"Unknown metadata key: '{key}'")
         try:
-            value = int(value_str)
-            if value < 1:
-                raise ValueError
-            data["max_link_capacity"] = value
-        except (ValueError):
+            max_drone_value = int(max_drone_value_str)
+        except ValueError:
+            raise ValueError("max_link_capacity must be an integer")
+        if max_drone_value < 1:
             raise ValueError("max_link_capacity must be an integer >= 1")
+        data["max_link_capacity"] = max_drone_value
+
         return data
 
     @model_validator(mode="after")

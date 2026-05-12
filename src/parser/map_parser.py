@@ -44,7 +44,8 @@ def parse_map(map_file: TextIO) -> Network:
 
                 try:
                     value: int = int(extract_value[1].strip())
-                    validate_drone: Drone_Approval = Drone_Approval(nb_drones=value)
+                    validate_drone: Drone_Approval = Drone_Approval(
+                        nb_drones=value)
                     my_map.nb_drones = validate_drone.nb_drones
                 except ValueError:
                     raise ValueError(f"--- line {i} --- \n"
@@ -105,7 +106,7 @@ def parse_map(map_file: TextIO) -> Network:
                     raise ValueError (f"--- line {i} --- \n"
                                       f"Invalid format line: {clean_line} must be : "
                                       "Connection1-Connection2 only ")
- 
+
                 list_connections: list[str] = connections_data[0].split("-")
 
                 nb_connections: int = len(list_connections)
