@@ -35,4 +35,4 @@ jobs:
         run: uv run flake8 .
 
       - name: Run Pytest
-        run: uv run pytest tests/ -v
+        run: uv run python -m pytest tests/ -v
