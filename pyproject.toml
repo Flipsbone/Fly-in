@@ -13,3 +13,14 @@ dev = [
     "flake8>=7.3.0",
     "mypy>=2.1.0",
 ]
+
+[tool.mypy]
+exclude = [
+    '^\\.venv/',
+]
+
+[flake8]
+exclude = 
+    .venv,
+    .git,
+    __pycache__
