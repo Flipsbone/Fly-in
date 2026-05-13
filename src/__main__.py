@@ -10,7 +10,9 @@ def main() -> None:
     try:
         with open(args.map_path, "r") as map_file:
             my_network = parse_map(map_file)
-            print(my_network)
+            neighbors = my_network.naming_neighbors()
+            resultat = my_network.is_one_solution(neighbors)
+            print(resultat)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
         sys.exit(1)

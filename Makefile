@@ -14,7 +14,7 @@ install: uv.lock
 
 run: install
 	@echo "Running the program..."
-	$(PYTHON) $(MAIN) maps/hard/02_capacity_hell.txt
+	$(PYTHON) $(MAIN) maps/easy/01_linear_path.txt
 
 debug: install
 	@echo "Starting debug mode..."

@@ -11,8 +11,7 @@ from src.models.network import Network
 
 
 def _validate_parsed_map(
-        find_drones_line: bool, start_hub: int,
-        end_hub: int, my_map: Network) -> None:
+        start_hub: int, end_hub: int, my_map: Network) -> None:
 
     if start_hub != 1 or end_hub != 1:
         raise ValueError("Map must have exactly one start_hub and one end_hub")
@@ -199,10 +198,9 @@ def parse_map(map_file: TextIO) -> Network:
                                  "or connection")
 
     _validate_parsed_map(
-        find_drones_line=find_drones_line,
-        start_hub=start_hub,
-        end_hub=end_hub,
-        my_map=my_map
+        start_hub,
+        end_hub,
+        my_map
     )
 
     return my_map
