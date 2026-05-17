@@ -119,7 +119,6 @@ class Connection_Approval(BaseModel):
     @classmethod
     def extract_metadata(cls, data: dict[str, Any]) -> dict:
         metadata_str: str = data.get("metadata", "")
-        print(metadata_str)
         if not metadata_str:
             return data
 
