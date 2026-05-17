@@ -4,8 +4,14 @@ nb_drones: 2
 start_hub: start 0 0 [color=green]
 hub: waypoint1 1 0 [color=blue]
 hub: waypoint2 2 0 [color=blue]
+hub: waypoint3 4 0 
+hub: waypoint4 5 0 
+hub: waypoint5 6 0 
 end_hub: goal 3 0 [color=red]
 
 connection: start-waypoint1
-connection: waypoint1-waypoint2
-connection: waypoint2-goal
+connection: start-waypoint2
+connection: waypoint2-waypoint3
+connection: waypoint1-waypoint4
+connection: waypoint3-waypoint5
+connection: waypoint5-goal

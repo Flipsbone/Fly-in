@@ -1,6 +1,6 @@
 import sys
 import argparse
-from src.parser.map_parser import parse_map
+from src.parser.map_parser import MapParser
 
 
 def main() -> None:
@@ -9,10 +9,12 @@ def main() -> None:
     args = parser.parse_args()
     try:
         with open(args.map_path, "r") as map_file:
-            my_network = parse_map(map_file)
+            parse = MapParser()
+            my_network = parse.parse_map(map_file)
             neighbors = my_network.naming_neighbors()
-            resultat = my_network.is_one_solution(neighbors)
-            print(resultat)
+            summits = my_network.total_zones
+            print(neighbors)
+            print(summits)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
         sys.exit(1)
