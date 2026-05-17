@@ -1,6 +1,7 @@
 import sys
 import argparse
 from src.parser.map_parser import MapParser
+from src.algo.graph import Graph
 
 
 def main() -> None:
@@ -11,10 +12,8 @@ def main() -> None:
         with open(args.map_path, "r") as map_file:
             parse = MapParser()
             my_network = parse.parse_map(map_file)
-            neighbors = my_network.naming_neighbors()
-            summits = my_network.total_zones
-            print(neighbors)
-            print(summits)
+            graph = Graph(my_network)
+            print(graph)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
         sys.exit(1)

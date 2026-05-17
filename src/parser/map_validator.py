@@ -42,10 +42,8 @@ class Zone_Approval(BaseModel):
     @classmethod
     def extract_metadata(cls, data: dict[str, Any]) -> dict[str, Any]:
         metadata_str: str = data.get("metadata", "")
-
         if not metadata_str:
             return data
-
         if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
             raise ValueError("Metadata must be enclosed in []")
 
@@ -80,8 +78,10 @@ class Zone_Approval(BaseModel):
                 case "color":
                     value_isalpha: bool = value_str.isalpha()
                     if not value_isalpha:
-                        raise ValueError(f"metadata value: '{value_str}' "
-                                         "is not valid single-word strings"
+                        raise ValueError(f"metadata value after '=' is "
+                                         f" '{value_str} ' the format must"
+                                         " be 'color=green' and the color"
+                                         " must be single-word strings"
                                          " (e.g., red, blue, gray).")
 
                     zone_metadata[key] = value_str
@@ -119,11 +119,15 @@ class Connection_Approval(BaseModel):
     @classmethod
     def extract_metadata(cls, data: dict[str, Any]) -> dict:
         metadata_str: str = data.get("metadata", "")
+        print(metadata_str)
         if not metadata_str:
             return data
 
         if not (metadata_str.startswith("[") and metadata_str.endswith("]")):
-            raise ValueError("Metadata must be enclosed in []")
+            raise ValueError("Metadata must be enclosed in [] "
+                             "that means the data not respect "
+                             "the folowing statement e.g., "
+                             "[max_link_capacity=2]")
 
         metadata_content: str = metadata_str.strip("[]")
         if "=" not in metadata_content:
@@ -135,7 +139,8 @@ class Connection_Approval(BaseModel):
         max_drone_value_str = value_str.strip()
 
         if key != "max_link_capacity":
-            raise ValueError(f"Unknown metadata key: '{key}'")
+            raise ValueError(f"Unknown metadata key: '{key}'\n"
+                             "Must be only e.g., [max_link_capacity=2]")
         try:
             max_drone_value = int(max_drone_value_str)
         except ValueError:

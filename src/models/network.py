@@ -10,17 +10,6 @@ class Network:
         self.end_node: Zone_Approval | None = None
         self.used_coordinates: set[tuple[int, int]] = set()
 
-    @property
-    def total_zones(self) -> set[str]:
-        return set(self.zones.keys())
-
-    def naming_neighbors(self) -> dict[str, set[str]]:
-        neighbors: dict[str, set[str]] = {zone: set() for zone in self.zones}
-        for connection in self.connections.values():
-            neighbors[connection.link_1].add(connection.link_2)
-            neighbors[connection.link_2].add(connection.link_1)
-        return neighbors
-
     # def is_one_solution(self, neighbors: dict[str, set[str]]) -> bool:
     #     if self.start_node is None or self.end_node is None:
     #         return False

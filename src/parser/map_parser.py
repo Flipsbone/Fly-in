@@ -28,14 +28,16 @@ class MapParser:
 
             if ":" not in clean_line:
                 raise ValueError(f"--- line {i} --- \n"
-                                 f"Invalid format : {clean_line}")
+                                 f"Invalid format : {clean_line}"
+                                 "must have one ':' after naming")
 
             clean_line_without_hash = clean_line.split("#")[0].strip()
             extract_value: list[str] = clean_line_without_hash.split(":")
 
             if len(extract_value) != 2:
                 raise ValueError(f"--- line {i} --- \n"
-                                 f"Invalid format in : {clean_line}")
+                                 f"Invalid format : {clean_line} "
+                                 "too many ':' only one")
 
             keyword: str = extract_value[0].strip()
             value_str: str = extract_value[1].strip()
@@ -52,8 +54,8 @@ class MapParser:
                     raise ValueError(f"--- line {i} --- \n"
                                      f"Invalid format line: {clean_line}\n"
                                      "ONLY CHOICES : \n"
-                                     "nb_drones, start_hub, end_hub, hub "
-                                     "or connection")
+                                     "'nb_drones:' , 'start_hub:' , 'end_hub:'"
+                                     " , 'hub:' or 'connection:' ")
         self._validate_parsed_map()
 
         return self.network
