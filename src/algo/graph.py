@@ -1,6 +1,7 @@
 from src.models.network import Network
 from src.algo.node import Node
 from collections import deque
+from typing import Any
 
 
 class Graph:
@@ -45,26 +46,60 @@ class Graph:
                         queue.append(neighbor)
         return False
 
-    # def solve(self) -> list[str]:
-    #     path: list[str] = []
-    #     current = self.start_name
-    #     end = self.end_name
-    #     tab: dict[str, float | str] = {
-    #         "distance": 0.0,
-    #         "from": current
-    #     }
+    def _update_tab(
+            self,
+            tab: dict[str, dict[str, Any]],
+            not_visited: list[str],
+            current: str) -> str | None:
 
-    #     neighbors = self.nodes[current].neighbors
-    #     print(neighbors)
-    #     not_visited: list[str] = list(self.nodes.keys())
-    #     print(not_visited)
+        if current in not_visited:
+            not_visited.remove(current)
 
-    #     while current != end:
-    #         current = update_tab(self, tab, not_visited, current)
+        for neighbor in self.nodes[current].neighbors:
+            if tab[neighbor]["distance"] > (
+                    tab[current]["distance"] + self.nodes[neighbor].cost):
+                tab[neighbor] = {
+                        "distance": (tab[current]["distance"] +
+                                     self.nodes[neighbor].cost),
+                        "from": current
+                }
+        mini: tuple[str | None, float] = (None, float('inf'))
+        for node in not_visited:
+            if tab[node]["distance"] < mini[1]:
+                mini = (node, tab[node]["distance"])
+        return mini[0]
 
-    #     return path
+    def solve(self) -> list[str]:
+        path: list[str] = []
+        current: str = self.start_name
+        end: str = self.end_name
+        tab: dict[str, dict[str, str | float | None]] = {}
 
-    # def update_tab(
-    # self, tab: dict[float, str], not_visited: list[str], current: str):
-    #     for neighbour in self.nodes[current].neighbors:
-    #         if tab[neighbour][""]
+        # neighbors = self.nodes[current].neighbors
+        not_visited: list[str] = list(self.nodes.keys())
+
+        for summit in not_visited:
+            tab[summit] = {}
+            if summit == current:
+                tab[summit]["distance"] = 0
+                tab[summit]["from"] = current
+            else:
+                tab[summit]["distance"] = float('inf')
+                tab[summit]["from"] = None
+
+        while current != end:
+            new_current: str | None = (
+                self._update_tab(tab, not_visited, current))
+            if new_current is None:
+                raise ValueError("none is not a node")
+            current = new_current
+        path = [end]
+        current_step: str = end
+        while current_step != self.start_name:
+            prev_node = tab[current_step]["from"]
+            if not isinstance(prev_node, str):
+                print(tab)
+                return []
+            current_step = prev_node
+            path.append(current_step)
+        return path[::-1]

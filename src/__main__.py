@@ -14,9 +14,11 @@ def main() -> None:
             my_network = parse.parse_map(map_file)
             graph = Graph(my_network)
             solution = graph.is_one_solution()
-            print(solution)
-            #solve = graph.solve()
-            print(graph)
+            if solution:
+                solve = graph.solve()
+                print(len(solve))
+            else:
+                print("No path found.", file=sys.stderr)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
         sys.exit(1)

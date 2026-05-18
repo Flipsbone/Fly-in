@@ -14,7 +14,7 @@ install: uv.lock
 
 run: install
 	@echo "Running the program..."
-	$(PYTHON) $(MAIN) maps/easy/01_linear_path.txt
+	$(PYTHON) $(MAIN) maps/hard/01_maze_nightmare.txt
 
 debug: install
 	@echo "Starting debug mode..."
