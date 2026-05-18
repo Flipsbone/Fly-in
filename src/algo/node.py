@@ -1,7 +1,14 @@
 class Node:
-    def __init__(self, name: str, zone_type: str, max_drones: int):
+    def __init__(
+            self, name: str,
+            zone_type: str,
+            color: str | None,
+            max_drones: int
+            ):
+
         self.name = name
         self.zone_type = zone_type
+        self.zone_color = color
         self.max_drones = max_drones
         self.neighbors: dict[str, int] = {}
 

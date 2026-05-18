@@ -13,6 +13,9 @@ def main() -> None:
             parse = MapParser()
             my_network = parse.parse_map(map_file)
             graph = Graph(my_network)
+            solution = graph.is_one_solution()
+            print(solution)
+            #solve = graph.solve()
             print(graph)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
