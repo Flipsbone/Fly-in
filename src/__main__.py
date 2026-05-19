@@ -21,9 +21,17 @@ def main() -> None:
                 while drones:
                     solve = graph.solve(table)
                     for i, node in enumerate(solve):
+                        if "-" in node:
+                            connection: list[str] = node.split("-")
+                            start_zone: str = connection[0]
+                            end_zone: str = connection[1]
+                            max_capacity: int = (
+                                graph.nodes[start_zone].neighbors[end_zone])
+                            table.reserve(i, node, max_capacity)
+                            continue
                         table.reserve(i, node)
                     print(table.reservation)
-                    print(solve)
+                    print(len(solve))
                     drones -= 1
                 else:
                     print("No path found.", file=sys.stderr)
