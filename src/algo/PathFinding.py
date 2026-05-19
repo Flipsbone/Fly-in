@@ -38,24 +38,23 @@ class PathFinder:
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         current_node = self.graph.nodes[current.name]
 
-        for neighbor_name in current_node.neighbors:
+        for neighbor_name, link_capacity in current_node.neighbors.items():
             neighbor_node = self.graph.nodes[neighbor_name]
+
             lap = current.turn + math.ceil(neighbor_node.cost)
+            route_turn = current.turn + 1
+
+            route_name = (
+                f"{min(current.name, neighbor_name)}-"
+                f"{max(current.name, neighbor_name)}")
+
+            if not self.reservation.is_available(
+                    route_turn, route_name, link_capacity):
+                continue
 
             if not self.reservation.is_available(
                     lap, neighbor_node.name, neighbor_node.max_drones):
                 continue
-
-            if neighbor_node.zone_type == "restricted":
-                route_turn = current.turn + 1
-                route_capacity = current_node.neighbors[neighbor_name]
-                route_name = f"{current.name}-{neighbor_name}"
-                if not self.reservation.is_available(
-                        route_turn, route_name, route_capacity):
-                    continue
-                if not self.reservation.is_available(
-                        lap, neighbor_node.name, neighbor_node.max_drones):
-                    continue
 
             next_state = TimeNode(turn=lap, name=neighbor_name)
             new_distance = self.tab[current]["distance"] + neighbor_node.cost
@@ -77,7 +76,7 @@ class PathFinder:
 
         if self.reservation.is_available(
                 wait_state.turn, wait_state.name, current_node.max_drones):
-            wait_distance = self.tab[current]["distance"] + 0.9
+            wait_distance = self.tab[current]["distance"] + 1
 
             if self.tab.get(
                 wait_state, {"distance": float('inf')})["distance"] > (
@@ -114,7 +113,8 @@ class PathFinder:
             prev_step = self.tab[current_step]["from"]
 
             if current_step.turn - prev_step.turn == 2:
-                connection_name = f"{prev_step.name}-{current_step.name}"
+                connection_name = (f"{min(prev_step.name, current_step.name)}-"
+                                   f"{max(prev_step.name, current_step.name)}")
                 path.append(connection_name)
 
             path.append(prev_step.name)

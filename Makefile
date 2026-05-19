@@ -15,7 +15,6 @@ install: uv.lock
 run: install
 	@echo "Running the program..."
 	$(PYTHON) $(MAIN) maps/challenger/01_the_impossible_dream.txt
-
 debug: install
 	@echo "Starting debug mode..."
 	$(PYTHON) -m pdb $(MAIN)
