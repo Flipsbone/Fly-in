@@ -2,6 +2,7 @@ import sys
 import argparse
 from src.parser.map_parser import MapParser
 from src.algo.graph import Graph
+from src.algo.reservation_table import ReservationTable
 
 
 def main() -> None:
@@ -15,10 +16,17 @@ def main() -> None:
             graph = Graph(my_network)
             solution = graph.is_one_solution()
             if solution:
-                solve = graph.solve()
-                print(len(solve))
-            else:
-                print("No path found.", file=sys.stderr)
+                drones = my_network.nb_drones
+                table = ReservationTable()
+                while drones:
+                    solve = graph.solve(table)
+                    for i, node in enumerate(solve):
+                        table.reserve(i, node)
+                    print(table.reservation)
+                    print(solve)
+                    drones -= 1
+                else:
+                    print("No path found.", file=sys.stderr)
     except PermissionError as e:
         print(f"Permission Error: {e}.", file=sys.stderr)
         sys.exit(1)

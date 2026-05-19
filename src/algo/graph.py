@@ -1,5 +1,6 @@
 from src.models.network import Network
 from src.algo.node import Node
+from src.algo.reservation_table import ReservationTable
 from collections import deque
 from typing import Any
 
@@ -46,50 +47,58 @@ class Graph:
                         queue.append(neighbor)
         return False
 
+    @staticmethod
+    def _ceiling_round(x: float) -> float:
+        return int(x) + (x > int(x))
+
     def _update_tab(
             self,
-            tab: dict[str, dict[str, Any]],
-            not_visited: list[str],
-            current: str) -> str | None:
+            tab: dict[tuple[int, str], dict[str, Any]],
+            not_visited: list[tuple[int, str]],
+            current: tuple[int, str],
+            reservation: ReservationTable) -> tuple[int, str]:
 
         if current in not_visited:
             not_visited.remove(current)
 
-        for neighbor in self.nodes[current].neighbors:
-            if tab[neighbor]["distance"] > (
+        for neighbor in self.nodes[current[1]].neighbors:
+            cost: float = tab[current]["distance"] + self.nodes[neighbor].cost
+            lap: int = int(self._ceiling_round(cost))
+            if not reservation.is_available(lap,
+                                            self.nodes[neighbor].name,
+                                            self.nodes[neighbor].max_drones):
+                continue
+            if tab.get(
+                (lap, neighbor), {"distance": float('inf')})["distance"] > (
                     tab[current]["distance"] + self.nodes[neighbor].cost):
-                tab[neighbor] = {
+                tab[lap, neighbor] = {
                         "distance": (tab[current]["distance"] +
                                      self.nodes[neighbor].cost),
                         "from": current
                 }
-        mini: tuple[str | None, float] = (None, float('inf'))
+                not_visited.append((lap, neighbor))
+
+            not_visited.append(current)
+        mini: tuple[float, str | None] = (float('inf'), None)
         for node in not_visited:
             if tab[node]["distance"] < mini[1]:
                 mini = (node, tab[node]["distance"])
         return mini[0]
 
-    def solve(self) -> list[str]:
+    def solve(self, reservation: ReservationTable) -> list[str]:
         path: list[str] = []
-        current: str = self.start_name
+        current: tuple[int, str] = (0, self.start_name)
         end: str = self.end_name
-        tab: dict[str, dict[str, str | float | None]] = {}
+        not_visited: list[tuple[int, str]] = []
+        tab: dict[tuple[int, str], dict[str, str | float | None]] = {}
 
         # neighbors = self.nodes[current].neighbors
-        not_visited: list[str] = list(self.nodes.keys())
 
-        for summit in not_visited:
-            tab[summit] = {}
-            if summit == current:
-                tab[summit]["distance"] = 0
-                tab[summit]["from"] = current
-            else:
-                tab[summit]["distance"] = float('inf')
-                tab[summit]["from"] = None
+        not_visited.append((0, self.start_name))
 
         while current != end:
-            new_current: str | None = (
-                self._update_tab(tab, not_visited, current))
+            new_current: tuple[int, str] = (
+                self._update_tab(tab, not_visited, current, reservation))
             if new_current is None:
                 raise ValueError("none is not a node")
             current = new_current
