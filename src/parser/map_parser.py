@@ -7,17 +7,22 @@ from src.parser.map_validator import (
     Connection_Approval
 )
 
-from src.models.network import Network
+from src.models.data_map import DataMap
 
 
 class MapParser:
     def __init__(self) -> None:
-        self.network: Network = Network()
+        self.nb_drones: int = 0
+        self.zones: dict[str, Zone_Approval] = {}
+        self.connections: dict[str, Connection_Approval] = {}
+        self.start_node: Zone_Approval | None = None
+        self.end_node: Zone_Approval | None = None
+        self.used_coordinates: set[tuple[int, int]] = set()
         self.has_drones_line: bool = False
         self.start_hub_count: int = 0
         self.end_hub_count: int = 0
 
-    def parse_map(self, map_file: TextIO) -> Network:
+    def parse_map(self, map_file: TextIO) -> DataMap:
 
         for i, line in enumerate(map_file):
             i += 1
@@ -56,9 +61,16 @@ class MapParser:
                                      "ONLY CHOICES : \n"
                                      "'nb_drones:' , 'start_hub:' , 'end_hub:'"
                                      " , 'hub:' or 'connection:' ")
-        self._validate_parsed_map()
+        valid_start, valid_end = self._validate_parsed_map()
 
-        return self.network
+        return DataMap(
+            nb_drones=self.nb_drones,
+            zones=self.zones,
+            connections=self.connections,
+            start_node=valid_start,
+            end_node=valid_end,
+            used_coordinates=self.used_coordinates
+        )
 
     def _parse_nb_drones(self, value_str: str, line_number: int) -> None:
         if self.has_drones_line:
@@ -71,7 +83,7 @@ class MapParser:
             nb_drones: int = int(value_str)
             validate_drone: Drone_Approval = Drone_Approval(
                 nb_drones=nb_drones)
-            self.network.nb_drones = validate_drone.nb_drones
+            self.nb_drones = validate_drone.nb_drones
         except ValueError:
             raise ValueError(
                 f"--- line {line_number} --- \n"
@@ -118,17 +130,17 @@ class MapParser:
             coords: tuple[int, int] = (
                 validate_zone.x, validate_zone.y)
 
-            if coords in self.network.used_coordinates:
+            if coords in self.used_coordinates:
                 raise ValueError(f"--- line {line_number} --- \n"
                                  "Parsing Error: "
                                  f"Duplicate coordinates '{coords}'")
-            self.network.used_coordinates.add(coords)
-            self.network.zones[validate_zone.name] = validate_zone
+            self.used_coordinates.add(coords)
+            self.zones[validate_zone.name] = validate_zone
 
             if hub_type == "start_hub":
-                self.network.start_node = validate_zone
+                self.start_node = validate_zone
             elif hub_type == "end_hub":
-                self.network.end_node = validate_zone
+                self.end_node = validate_zone
         except ValidationError as e:
             msg = e.errors()[0]['msg']
             raise ValueError(f"--- line {line_number} --- \n"
@@ -174,8 +186,8 @@ class MapParser:
                     connections_data) > 1 else ""
             }
 
-            if (list_connections[0] not in self.network.zones or
-                    list_connections[1] not in self.network.zones):
+            if (list_connections[0] not in self.zones or
+                    list_connections[1] not in self.zones):
                 raise ValueError(
                     f"--- line {line_number} --- \n"
                     "Connections must link only previously defined zones"
@@ -186,27 +198,29 @@ class MapParser:
 
             unique_key: str = (f"{validate_connection.link_1}-"
                                f"{validate_connection.link_2}")
-            if unique_key in self.network.connections:
+            if unique_key in self.connections:
                 raise ValueError(
                     f"--- line {line_number} --- \n"
                     f"Parsing Error: Duplicate connection '{unique_key}'"
                 )
-            self.network.connections[unique_key] = validate_connection
+            self.connections[unique_key] = validate_connection
 
         except ValidationError as e:
             msg = e.errors()[0]['msg']
             raise ValueError(f"--- line {line_number} --- \n"
                              f"Parsing Error : {msg}")
 
-    def _validate_parsed_map(self) -> None:
+    def _validate_parsed_map(self) -> tuple[Zone_Approval, Zone_Approval]:
 
         if self.start_hub_count != 1 or self.end_hub_count != 1:
             raise ValueError("Map must have exactly one start_hub"
                              "and one end_hub")
 
-        if self.network.start_node is None or self.network.end_node is None:
+        if self.start_node is None or self.end_node is None:
             raise ValueError("Parsing error: start_hub or "
                              "end_hub nodes were not properly initialized")
 
-        self.network.start_node.max_drones = self.network.nb_drones
-        self.network.end_node.max_drones = self.network.nb_drones
+        self.start_node.max_drones = self.nb_drones
+        self.end_node.max_drones = self.nb_drones
+
+        return self.start_node, self.end_node

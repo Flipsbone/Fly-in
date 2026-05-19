@@ -3,40 +3,48 @@ import argparse
 from src.parser.map_parser import MapParser
 from src.algo.graph import Graph
 from src.algo.reservation_table import ReservationTable
+from src.algo.PathFinding import PathFinder
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("map_path")
     args = parser.parse_args()
+
     try:
         with open(args.map_path, "r") as map_file:
             parse = MapParser()
-            my_network = parse.parse_map(map_file)
-            graph = Graph(my_network)
-            solution = graph.is_one_solution()
-            if solution:
-                drones = my_network.nb_drones
-                table = ReservationTable()
-                while drones:
-                    solve = graph.solve(table)
-                    for i, node in enumerate(solve):
-                        if "-" in node:
-                            connection: list[str] = node.split("-")
-                            start_zone: str = connection[0]
-                            end_zone: str = connection[1]
-                            max_capacity: int = (
-                                graph.nodes[start_zone].neighbors[end_zone])
-                            table.reserve(i, node, max_capacity)
-                            continue
-                        table.reserve(i, node)
-                    print(table.reservation)
-                    print(len(solve))
-                    drones -= 1
-                else:
-                    print("No path found.", file=sys.stderr)
+            data_map = parse.parse_map(map_file)
+
+        graph = Graph(data_map)
+        table = ReservationTable()
+
+        checker = PathFinder(graph, table)
+        if not checker.is_one_solution():
+            print("No path found.", file=sys.stderr)
+            sys.exit(1)
+
+        remaining_drones = data_map.nb_drones
+        drone_id = 1
+
+        while remaining_drones > 0:
+            solver: PathFinder = PathFinder(graph, table)
+            path: list[str] = solver.solve()
+            text: list[str] = []
+            for turn, node in enumerate(path):
+                table.reserve(turn, node)
+
+                strings: str = f"D{drone_id}-{node}"
+                text.append(strings)
+            print(f"--- Drone {drone_id} ---")
+            print(f"Path found in {len(path)} steps.")
+            print(" ".join(text))
+
+            remaining_drones -= 1
+            drone_id += 1
+
     except PermissionError as e:
-        print(f"Permission Error: {e}.", file=sys.stderr)
+        print(f"Permission Error: {e}", file=sys.stderr)
         sys.exit(1)
     except FileNotFoundError:
         print(f"Error: File '{args.map_path}' not found.", file=sys.stderr)

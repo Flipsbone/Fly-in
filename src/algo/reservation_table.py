@@ -6,11 +6,6 @@ class ReservationTable:
         current_reservations = self.reservation.get((lap, node), 0)
         return current_reservations < capacity_max
 
-    def reserve(
-            self,
-            lap: int,
-            node: str,
-            max_capacity: int | None = None
-            ) -> None:
+    def reserve(self, lap: int, node: str) -> None:
         self.reservation[(lap, node)] = (
             self.reservation.get((lap, node), 0) + 1)
