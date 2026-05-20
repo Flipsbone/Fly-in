@@ -39,8 +39,10 @@ class PathFinder:
     def _get_next_closest_node(self) -> TimeNode | None:
         mini: tuple[TimeNode | None, float] = (None, float('inf'))
         for next_state in self.not_visited:
-            if self.tab[next_state]["distance"] < mini[1]:
-                mini = (next_state, self.tab[next_state]["distance"])
+            print(mini[1])
+            print(self.tab[next_state]["weight"])
+            if self.tab[next_state]["weight"] < mini[1]:
+                mini = (next_state, self.tab[next_state]["weight"])
         return mini[0]
 
     def _reconstruct_path(
@@ -57,18 +59,18 @@ class PathFinder:
     
     def _maj_tab(self, current: TimeNode, neighbor_name: str, neigbor_node: Node, next_turn: int) -> None:
             next_state = TimeNode(next_turn, neighbor_name)
-            new_distance = self.tab[current]["distance"] + neigbor_node.cost
-            node_data = self.tab.get(next_state, {"distance": float('inf')})
-            if new_distance < node_data["distance"]:
+            new_weight = self.tab[current]["weight"] + neigbor_node.cost
+            node_data = self.tab.get(next_state, {"weight": float('inf')})
+            if new_weight < node_data["weight"]:
                 self.tab[next_state] = {
-                    "distance": new_distance,
+                    "weight": new_weight,
                     "from": current
                 }
                 self.not_visited.append(next_state)
 
-    def _evaluate_neighbors(self, current: TimeNode) -> None:
+    def _evaluate_neighbors(self, current: TimeNode) -> bool:
         current_node: Node = self.graph.nodes[current.name]
-        
+        flag_wait = 0
         for neighbor_name, link_capacity in current_node.neighbors.items():
             # cest pour passer les sommets deja visite
             if neighbor_name in self.visted:
@@ -88,18 +90,29 @@ class PathFinder:
             if not self.reservation.is_available(
                 next_turn, neigbor_node.name, neigbor_node.max_drones):
                 continue
-
+            flag_wait = 1
             self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
+        if flag_wait == 0 :
+            self.tab[current]["weight"] +=1
+            self.not_visited.append(current.name)
+            return True
+        return False
+
     
-    def _evaluate_wait(self, current: TimeNode) -> None:
-        
+    # def _wait(self, current: TimeNode) -> None:
+    #     current_node: Node = self.graph.nodes[current.name]
+    #     wait_state = TimeNode(current.turn + 1, current.name)
+    #     if not self.reservation.is_available(
+    #             wait_state.turn, wait_state.name, current_node.max_drones):
+    #         self.tab[current]["weight"] +=1
+    #         self.not_visited.append(current.name)
 
     def _process_node(self, current: TimeNode) -> TimeNode:
         if current in self.not_visited:
             self.not_visited.remove(current)
 
-        self._evaluate_neighbors(current)
-        self._evaluate_wait(current)
+        if self._evaluate_neighbors(current):
+            return current
         return self._get_next_closest_node()
 
     def solve(self) -> list[str]:
@@ -108,7 +121,7 @@ class PathFinder:
 
         self.not_visited.append(current)
         self.tab[current] = {
-            "distance": 0,
+            "weight": 0,
             "from": None
         }
         self.visted.add(current.name)

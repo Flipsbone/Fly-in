@@ -31,11 +31,13 @@ def main() -> None:
             solver: PathFinder = PathFinder(graph, table)
             path: list[str] = solver.solve()
             text: list[str] = []
-            for turn, node in enumerate(path):
-                table.reserve(turn, node)
-                print(table.reservation)
-                strings: str = f"D{drone_id}-{node}"
+            for turn, nodes in enumerate(zip(path[:-1], path[1:])):
+                start, end = nodes
+                table.reserve(turn, start)
+                table.reserve(turn+1,f"{start}-{end}")
+                strings: str = f"D{drone_id}-{start}"
                 text.append(strings)
+            table.reserve(turn + 1, end)
             print(f"--- Drone {drone_id} ---")
             print(f"Path found in {len(path)-1} steps.")
             print(" ".join(text))
