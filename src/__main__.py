@@ -33,11 +33,11 @@ def main() -> None:
             text: list[str] = []
             for turn, node in enumerate(path):
                 table.reserve(turn, node)
-
+                print(table.reservation)
                 strings: str = f"D{drone_id}-{node}"
                 text.append(strings)
             print(f"--- Drone {drone_id} ---")
-            print(f"Path found in {len(path)} steps.")
+            print(f"Path found in {len(path)-1} steps.")
             print(" ".join(text))
 
             remaining_drones -= 1
