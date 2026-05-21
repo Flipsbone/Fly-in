@@ -15,7 +15,9 @@ class Graph:
                 name,
                 zone.zone,
                 zone.color,
-                zone.max_drones
+                zone.max_drones,
+                zone.x,
+                zone.y
             )
 
         for name, connection in network.connections.items():

@@ -26,10 +26,12 @@ def main() -> None:
 
         remaining_drones = data_map.nb_drones
         drone_id = 1
+        drone_paths: dict[int, list[str]] = {}
 
         while remaining_drones > 0:
             solver = PathFinder(graph, table)
             path = solver.solve()
+            drone_paths[drone_id] = path
 
             text = []
             for turn, location in enumerate(path):

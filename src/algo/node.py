@@ -3,7 +3,9 @@ class Node:
             self, name: str,
             zone_type: str,
             color: str | None,
-            max_drones: int
+            max_drones: int,
+            x: int,
+            y: int
             ):
 
         self.name = name
@@ -11,6 +13,8 @@ class Node:
         self.zone_color = color
         self.max_drones = max_drones
         self.neighbors: dict[str, int] = {}
+        self.x = x
+        self.y = y
 
     @property
     def cost(self) -> float:
