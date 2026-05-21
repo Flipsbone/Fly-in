@@ -18,7 +18,7 @@ class PathFinder:
         self.graph = graph
         self.reservation = reservation
         self.tab: dict[TimeNode, dict[str, Any]] = {}
-        self.not_visited: list[TimeNode] = []
+        self.not_visited: list[tuple[float, TimeNode]] = []
         self.visted: set[str] = set()
 
     def is_one_solution(self) -> bool:
@@ -48,17 +48,23 @@ class PathFinder:
             path.append(prev_step.name)
             current_step = prev_step
         return path[::-1]
-    
-    def _maj_tab(self, current: TimeNode, neighbor_name: str, neigbor_node: Node, next_turn: int) -> None:
-            next_state = TimeNode(next_turn, neighbor_name)
-            new_weight = self.tab[current]["weight"] + neigbor_node.cost
-            node_data = self.tab.get(next_state, {"weight": float('inf')})
-            if new_weight < node_data["weight"]:
-                self.tab[next_state] = {
-                    "weight": new_weight,
-                    "from": current
-                }
-                heapq.heappush(self.not_visited, (new_weight, next_state))
+
+    def _maj_tab(
+            self,
+            current: TimeNode,
+            neighbor_name: str,
+            neigbor_node: Node,
+            next_turn: int) -> None:
+
+        next_state = TimeNode(next_turn, neighbor_name)
+        new_weight = self.tab[current]["weight"] + neigbor_node.cost
+        node_data = self.tab.get(next_state, {"weight": float('inf')})
+        if new_weight < node_data["weight"]:
+            self.tab[next_state] = {
+                "weight": new_weight,
+                "from": current
+            }
+            heapq.heappush(self.not_visited, (new_weight, next_state))
 
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         self._wait(current)
@@ -77,14 +83,15 @@ class PathFinder:
             route_name = (
                 f"{min(current.name, neighbor_name)}-"
                 f"{max(current.name, neighbor_name)}")
-            
+
             if not self.reservation.is_available(
                     next_turn, route_name, link_capacity):
                 continue
 
             if neigbor_node.zone_type == "restricted":
                 if not self.reservation.is_available(
-                    next_turn + 1, neigbor_node.name, neigbor_node.max_drones):
+                        next_turn + 1,
+                        neigbor_node.name, neigbor_node.max_drones):
                     continue
 
                 new_weight = self.tab[current]["weight"] + neigbor_node.cost
@@ -94,7 +101,7 @@ class PathFinder:
                 if new_weight < node_data["weight"]:
                     connection_state = TimeNode(next_turn, route_name)
                     self.tab[connection_state] = {
-                        "weight": self.tab[current]["weight"], 
+                        "weight": self.tab[current]["weight"],
                         "from": current
                     }
                     self.tab[final_state] = {
@@ -104,18 +111,17 @@ class PathFinder:
                     heapq.heappush(self.not_visited, (new_weight, final_state))
             else:
                 if not self.reservation.is_available(
-                next_turn, neigbor_node.name, neigbor_node.max_drones):
+                        next_turn, neigbor_node.name, neigbor_node.max_drones):
                     continue
                 self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
 
-
-    
     def _wait(self, current: TimeNode) -> None:
         current_node: Node = self.graph.nodes[current.name]
         wait_turn = current.turn + 1
         if current.name != self.graph.start_name:
-            if not self.reservation.is_available(wait_turn, current.name, current_node.max_drones):
-                return 
+            if not self.reservation.is_available(
+                    wait_turn, current.name, current_node.max_drones):
+                return
 
         new_weight = self.tab[current]["weight"] + 1
         wait_state = TimeNode(wait_turn, current.name)
