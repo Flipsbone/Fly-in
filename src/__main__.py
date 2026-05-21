@@ -28,18 +28,16 @@ def main() -> None:
         drone_id = 1
 
         while remaining_drones > 0:
-            solver: PathFinder = PathFinder(graph, table)
-            path: list[str] = solver.solve()
-            text: list[str] = []
-            for turn, nodes in enumerate(zip(path[:-1], path[1:])):
-                start, end = nodes
-                table.reserve(turn, start)
-                table.reserve(turn+1,f"{start}-{end}")
-                strings: str = f"D{drone_id}-{start}"
-                text.append(strings)
-            table.reserve(turn + 1, end)
+            solver = PathFinder(graph, table)
+            path = solver.solve()
+
+            text = []
+            for turn, location in enumerate(path):
+                table.reserve(turn, location)
+                text.append(f"D{drone_id}-{location} Turn={turn}")
+
             print(f"--- Drone {drone_id} ---")
-            print(f"Path found in {len(path)-1} steps.")
+            print(f"Path found in {len(path) - 1} steps.")
             print(" ".join(text))
 
             remaining_drones -= 1

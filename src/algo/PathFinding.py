@@ -39,8 +39,6 @@ class PathFinder:
     def _get_next_closest_node(self) -> TimeNode | None:
         mini: tuple[TimeNode | None, float] = (None, float('inf'))
         for next_state in self.not_visited:
-            print(mini[1])
-            print(self.tab[next_state]["weight"])
             if self.tab[next_state]["weight"] < mini[1]:
                 mini = (next_state, self.tab[next_state]["weight"])
         return mini[0]
@@ -68,15 +66,18 @@ class PathFinder:
                 }
                 self.not_visited.append(next_state)
 
-    def _evaluate_neighbors(self, current: TimeNode) -> bool:
+    def _evaluate_neighbors(self, current: TimeNode) -> None:
+        self._wait(current)
         current_node: Node = self.graph.nodes[current.name]
-        flag_wait = 0
+
         for neighbor_name, link_capacity in current_node.neighbors.items():
-            # cest pour passer les sommets deja visite
             if neighbor_name in self.visted:
                 continue
 
             neigbor_node: Node = self.graph.nodes[neighbor_name]
+            if neigbor_node.zone_type == "blocked":
+                continue
+
             next_turn: int = current.turn + 1
 
             route_name = (
@@ -87,32 +88,52 @@ class PathFinder:
                     next_turn, route_name, link_capacity):
                 continue
 
-            if not self.reservation.is_available(
+            if neigbor_node.zone_type == "restricted":
+                if not self.reservation.is_available(
+                    next_turn + 1, neigbor_node.name, neigbor_node.max_drones):
+                    continue
+                connection_state = TimeNode(next_turn, route_name)
+                self.tab[connection_state] = {
+                    "weight": self.tab[current]["weight"], 
+                    "from": current
+                }
+                final_state = TimeNode(next_turn + 1, neighbor_name)
+                self.tab[final_state] = {
+                    "weight": self.tab[current]["weight"] + neigbor_node.cost,
+                    "from": connection_state
+                }
+                self.not_visited.append(final_state)
+            else:
+                if not self.reservation.is_available(
                 next_turn, neigbor_node.name, neigbor_node.max_drones):
-                continue
-            flag_wait = 1
-            self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
-        if flag_wait == 0 :
-            self.tab[current]["weight"] +=1
-            self.not_visited.append(current.name)
-            return True
-        return False
+                    continue
+                self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
+
 
     
-    # def _wait(self, current: TimeNode) -> None:
-    #     current_node: Node = self.graph.nodes[current.name]
-    #     wait_state = TimeNode(current.turn + 1, current.name)
-    #     if not self.reservation.is_available(
-    #             wait_state.turn, wait_state.name, current_node.max_drones):
-    #         self.tab[current]["weight"] +=1
-    #         self.not_visited.append(current.name)
+    def _wait(self, current: TimeNode) -> None:
+        current_node: Node = self.graph.nodes[current.name]
+        wait_turn = current.turn + 1
+        if current.name != self.graph.start_name:
+            if not self.reservation.is_available(wait_turn, current.name, current_node.max_drones):
+                return 
+
+        new_weight = self.tab[current]["weight"] + 1
+        wait_state = TimeNode(wait_turn, current.name)
+
+        node_data = self.tab.get(wait_state, {"weight": float('inf')})
+        if new_weight < node_data["weight"]:
+            self.tab[wait_state] = {
+                "weight": new_weight,
+                "from": current
+                }
+        self.not_visited.append(wait_state)
 
     def _process_node(self, current: TimeNode) -> TimeNode:
         if current in self.not_visited:
             self.not_visited.remove(current)
 
-        if self._evaluate_neighbors(current):
-            return current
+        self._evaluate_neighbors(current)
         return self._get_next_closest_node()
 
     def solve(self) -> list[str]:
