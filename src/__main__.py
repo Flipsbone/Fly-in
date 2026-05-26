@@ -1,9 +1,11 @@
 import sys
 import argparse
+import arcade
 from src.parser.map_parser import MapParser
 from src.algo.graph import Graph
 from src.algo.reservation_table import ReservationTable
-from src.algo.PathFinding import PathFinder
+from src.algo.pathfinding import PathFinder
+from src.gui.visualizer import FlyInVisualizer
 
 
 def main() -> None:
@@ -26,10 +28,12 @@ def main() -> None:
 
         remaining_drones = data_map.nb_drones
         drone_id = 1
+        drone_paths: dict[int, list[str]] = {}
 
         while remaining_drones > 0:
             solver = PathFinder(graph, table)
             path = solver.solve()
+            drone_paths[drone_id] = path
 
             text = []
             for turn, location in enumerate(path):
@@ -43,6 +47,9 @@ def main() -> None:
             remaining_drones -= 1
             drone_id += 1
 
+        window = FlyInVisualizer(graph, drone_paths)
+        window.setup()
+        arcade.run()
     except PermissionError as e:
         print(f"Permission Error: {e}", file=sys.stderr)
         sys.exit(1)

@@ -1,0 +1,4 @@
+nb_drones: 1
+start_hub: bad-start 0 0
+end_hub: end 10 0
+connection: bad-start-end
