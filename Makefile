@@ -1,6 +1,7 @@
 PYTHON = uv run python3
 MAIN = -m src
 SRC = src/
+MAP ?= maps/challenger/01_the_impossible_dream.txt
 
 all: install
 
@@ -13,8 +14,8 @@ install: uv.lock
 	uv sync
 
 run: install
-	@echo "Running the program..."
-	$(PYTHON) $(MAIN) maps/challenger/01_the_impossible_dream.txt
+	@echo "Running the program with map: $(MAP)..."
+	$(PYTHON) $(MAIN) $(MAP)
 debug: install
 	@echo "Starting debug mode..."
 	$(PYTHON) -m pdb $(MAIN)
