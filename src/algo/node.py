@@ -22,7 +22,7 @@ class Node:
             case "restricted":
                 return 2.0
             case "priority":
-                return 0.1
+                return 1.0
             case "normal":
                 return 1.0
             case _:

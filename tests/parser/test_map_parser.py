@@ -19,7 +19,7 @@ def test_parser_missing_start_or_end(tmp_path: Path) -> None:
     with open(test_file, 'r', encoding="utf-8") as f:
         with pytest.raises(ValueError) as exc:
             parser.parse_map(f)
-        assert "exactly one start_hub" in str(exc.value)
+        assert "Missing start_hub" in str(exc.value)
 
 
 def test_parser_duplicate_coordinates(tmp_path: Path) -> None:

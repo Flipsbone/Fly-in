@@ -13,12 +13,23 @@ class TimeNode:
     name: str
 
 
+@dataclass(order=True)
+class QueueItem:
+    weight: float
+    # 0 if zone == priority
+    is_not_priority: int
+    # 0 if wait. Make sure to prioritize the wait state rather
+    # than moving and coming back the next turn at the same place.
+    is_move: int
+    state: TimeNode
+
+
 class PathFinder:
     def __init__(self, graph: Graph, reservation: ReservationTable):
         self.graph = graph
         self.reservation = reservation
         self.tab: dict[TimeNode, dict[str, Any]] = {}
-        self.not_visited: list[tuple[float, TimeNode]] = []
+        self.not_visited: list[QueueItem] = []
         self.visited: set[TimeNode] = set()
 
     def is_one_solution(self) -> bool:
@@ -64,7 +75,13 @@ class PathFinder:
                 "weight": new_weight,
                 "from": current
             }
-            heapq.heappush(self.not_visited, (new_weight, next_state))
+        heapq.heappush(self.not_visited, QueueItem(
+                weight=new_weight,
+                is_not_priority=(
+                    0 if neigbor_node.zone_type == "priority" else 1),
+                is_move=1,
+                state=next_state
+            ))
 
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         self._wait(current)
@@ -111,7 +128,12 @@ class PathFinder:
                         "weight": new_weight,
                         "from": connection_state
                     }
-                    heapq.heappush(self.not_visited, (new_weight, final_state))
+                    heapq.heappush(self.not_visited, QueueItem(
+                        weight=new_weight,
+                        is_not_priority=1,
+                        is_move=1,
+                        state=final_state
+                    ))
             else:
                 if not self.reservation.is_available(
                         next_turn, neigbor_node.name, neigbor_node.max_drones):
@@ -129,21 +151,37 @@ class PathFinder:
                 "weight": new_weight,
                 "from": current
                 }
-            heapq.heappush(self.not_visited, (new_weight, wait_state))
+            heapq.heappush(self.not_visited, QueueItem(
+                weight=new_weight,
+                is_not_priority=(
+                    0 if self.graph.nodes[current.name].zone_type ==
+                    "priority" else 1),
+                is_move=0,
+                state=wait_state
+            ))
 
     def solve(self) -> list[str]:
         start_state = TimeNode(turn=0, name=self.graph.start_name)
         current: TimeNode = start_state
 
         self.not_visited = []
-        heapq.heappush(self.not_visited, (0, start_state))
+        heapq.heappush(self.not_visited, QueueItem(
+            weight=0.0,
+            is_not_priority=(
+                0 if self.graph.nodes[self.graph.start_name].zone_type ==
+                "priority" else 1),
+            is_move=0,
+            state=start_state
+        ))
 
         self.tab[current] = {
             "weight": 0,
             "from": None
         }
         while self.not_visited:
-            current_weight, current = heapq.heappop(self.not_visited)
+            current_item = heapq.heappop(self.not_visited)
+            current_weight = current_item.weight
+            current = current_item.state
             if current.name == self.graph.end_name:
                 return self._reconstruct_path(current, start_state)
             if current_weight > self.tab[current]["weight"]:
