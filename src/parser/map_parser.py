@@ -24,6 +24,9 @@ class MapParser:
 
     def parse_map(self, map_file: TextIO) -> DataMap:
 
+        flag_start_hub: bool = False
+        flag_end_hub: bool = False
+
         for i, line in enumerate(map_file):
             i += 1
             clean_line: str = line.strip()
@@ -33,7 +36,7 @@ class MapParser:
 
             if ":" not in clean_line:
                 raise ValueError(f"--- line {i} --- \n"
-                                 f"Invalid format : {clean_line}"
+                                 f"Invalid format : {clean_line} "
                                  "must have one ':' after naming")
 
             clean_line_without_hash = clean_line.split("#")[0].strip()
@@ -51,7 +54,13 @@ class MapParser:
 
                 case "nb_drones":
                     self._parse_nb_drones(value_str, i)
-                case "start_hub" | "hub" | "end_hub":
+                case "start_hub":
+                    flag_start_hub = True
+                    self._parse_hub(keyword, value_str, clean_line, i)
+                case "hub":
+                    self._parse_hub(keyword, value_str, clean_line, i)
+                case "end_hub":
+                    flag_end_hub = True
                     self._parse_hub(keyword, value_str, clean_line, i)
                 case "connection":
                     self._parse_connection(value_str, clean_line, i)
@@ -61,6 +70,16 @@ class MapParser:
                                      "ONLY CHOICES : \n"
                                      "'nb_drones:' , 'start_hub:' , 'end_hub:'"
                                      " , 'hub:' or 'connection:' ")
+
+        if not flag_start_hub:
+            raise ValueError("Missing start_hub\n"
+                             "Must be start_hub: "
+                             "<name> <x> <y> [metadata](optional)")
+        if not flag_end_hub:
+            raise ValueError("Missing end_hub\n"
+                             "Must be end_hub: "
+                             "<name> <x> <y> [metadata](optional)")
+
         valid_start, valid_end = self._validate_parsed_map()
 
         return DataMap(

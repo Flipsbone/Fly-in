@@ -117,7 +117,7 @@ class Connection_Approval(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def extract_metadata(cls, data: dict[str, Any]) -> dict:
+    def extract_metadata(cls, data: dict[str, Any]) -> dict[str, int]:
         metadata_str: str = data.get("metadata", "")
         if not metadata_str:
             return data
