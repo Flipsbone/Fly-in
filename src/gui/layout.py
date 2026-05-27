@@ -9,9 +9,6 @@ class GraphLayout:
         self.screen_coords: dict[str, tuple[int, int]] = {}
 
     def recalculate(self, window_width: int, window_height: int) -> None:
-        if not self.graph.nodes:
-            return
-
         min_x: float = min(node.x for node in self.graph.nodes.values())
         max_x: float = max(node.x for node in self.graph.nodes.values())
         min_y: float = min(node.y for node in self.graph.nodes.values())

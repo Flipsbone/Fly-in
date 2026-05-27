@@ -71,8 +71,6 @@ class PathFinder:
         current_node: Node = self.graph.nodes[current.name]
 
         for neighbor_name, link_capacity in current_node.neighbors.items():
-            if neighbor_name in self.visited:
-                continue
 
             neigbor_node: Node = self.graph.nodes[neighbor_name]
             if neigbor_node.zone_type == "blocked":
@@ -83,7 +81,6 @@ class PathFinder:
             route_name = (
                 f"{min(current.name, neighbor_name)}-"
                 f"{max(current.name, neighbor_name)}")
-
             if not self.reservation.is_available(
                     next_turn, route_name, link_capacity):
                 continue
@@ -91,7 +88,13 @@ class PathFinder:
             if neigbor_node.zone_type == "restricted":
                 if not self.reservation.is_available(
                         next_turn + 1,
-                        neigbor_node.name, neigbor_node.max_drones):
+                        route_name, link_capacity):
+                    continue
+
+                if not self.reservation.is_available(
+                        next_turn + 1,
+                        neigbor_node.name,
+                        neigbor_node.max_drones):
                     continue
 
                 new_weight = self.tab[current]["weight"] + neigbor_node.cost
@@ -116,13 +119,7 @@ class PathFinder:
                 self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
 
     def _wait(self, current: TimeNode) -> None:
-        current_node: Node = self.graph.nodes[current.name]
         wait_turn = current.turn + 1
-        if current.name != self.graph.start_name:
-            if not self.reservation.is_available(
-                    wait_turn, current.name, current_node.max_drones):
-                return
-
         new_weight = self.tab[current]["weight"] + 1
         wait_state = TimeNode(wait_turn, current.name)
 

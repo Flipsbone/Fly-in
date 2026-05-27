@@ -35,10 +35,16 @@ def main() -> None:
             path = solver.solve()
             drone_paths[drone_id] = path
 
-            text = []
+            text: list[str] = []
             for turn, location in enumerate(path):
                 table.reserve(turn, location)
                 text.append(f"D{drone_id}-{location} Turn={turn}")
+                if turn > 0 and path[turn - 1] != location:
+                    prev_location = path[turn - 1]
+                    if "-" not in prev_location + location:
+                        route = (f"{min(prev_location, location)}-"
+                                 f"{max(prev_location, location)}")
+                        table.reserve(turn, route)
 
             print(f"--- Drone {drone_id} ---")
             print(f"Path found in {len(path) - 1} steps.")
