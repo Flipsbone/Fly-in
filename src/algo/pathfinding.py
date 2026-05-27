@@ -19,7 +19,7 @@ class PathFinder:
         self.reservation = reservation
         self.tab: dict[TimeNode, dict[str, Any]] = {}
         self.not_visited: list[tuple[float, TimeNode]] = []
-        self.visited: set[str] = set()
+        self.visited: set[TimeNode] = set()
 
     def is_one_solution(self) -> bool:
         queue: deque[str] = deque([self.graph.start_name])
@@ -151,6 +151,8 @@ class PathFinder:
                 return self._reconstruct_path(current, start_state)
             if current_weight > self.tab[current]["weight"]:
                 continue
-            self.visited.add(current.name)
+            if current in self.visited:
+                continue
+            self.visited.add(current)
             self._evaluate_neighbors(current)
         raise ValueError("No path found")
