@@ -4,6 +4,7 @@ import arcade
 from src.algo.graph import Graph
 from src.gui.simulation import SimulationState
 from src.gui.layout import GraphLayout
+from src.gui.models_gui import HoveredNode
 
 
 class FlyInVisualizer(arcade.Window):
@@ -16,7 +17,7 @@ class FlyInVisualizer(arcade.Window):
         )
 
         self.state = SimulationState(drone_paths)
-        self.layout = GraphLayout(graph)
+        self.layout = GraphLayout(graph, 80)
 
         self.mouse_x: float = 0.0
         self.mouse_y: float = 0.0
@@ -48,84 +49,85 @@ class FlyInVisualizer(arcade.Window):
             self.state.next_turn()
         elif key == arcade.key.LEFT:
             self.state.previous_turn()
+        elif key == arcade.key.ESCAPE:
+            arcade.exit()
 
     def on_draw(self) -> None:
         self.clear()
 
-        nodes_drones, links_drones = self.state.get_drones_positions()
+        positions = self.state.get_drones_positions()
 
-        self._draw_connections(links_drones)
-        hovered_node = self._draw_nodes(nodes_drones)
+        self._draw_connections(positions.on_links)
 
+        hovered_node = self._draw_nodes(positions.on_nodes)
         if hovered_node:
             self._draw_tooltip(hovered_node)
 
         self._draw_ui()
 
-    def _draw_connections(
-        self, drones_on_links: dict[tuple[str, str], list[int]]
+    def _draw_single_link(
+        self, start_x: int, start_y: int, end_x: int, end_y: int
     ) -> None:
+        arcade.draw_line(start_x, start_y, end_x, end_y, arcade.color.GRAY, 2)
+
+    def _draw_drones_circle(
+        self, start_x: int,
+        start_y: int, end_x: int,
+        end_y: int, drones: list[int]
+    ) -> None:
+
+        mid_x = (start_x + end_x) // 2
+        mid_y = (start_y + end_y) // 2
+        text: str = ", ".join(f"D{d}" for d in drones)
+
+        arcade.draw_circle_filled(mid_x, mid_y, 14, arcade.color.YELLOW)
+        arcade.draw_circle_outline(mid_x, mid_y, 14, arcade.color.BLACK, 1)
+
+        arcade.Text(
+            text=text,
+            x=mid_x,
+            y=mid_y,
+            color=arcade.color.BLACK,
+            font_size=10,
+            anchor_x="center",
+            anchor_y="center",
+            bold=True,
+        ).draw()
+
+    def _draw_connections(
+            self, drones_on_links: dict[tuple[str, str], list[int]]) -> None:
+
         drawn_links: set[tuple[str, str]] = set()
 
         for node in self.layout.graph.nodes.values():
-            if node.name not in self.layout.screen_coords:
-                continue
-
             start_x, start_y = self.layout.screen_coords[node.name]
 
             for neighbor_name in node.neighbors:
-                if neighbor_name not in self.layout.screen_coords:
-                    continue
-
                 link_id: tuple[str, str] = (
                     min(node.name, neighbor_name),
-                    max(node.name, neighbor_name))
+                    max(node.name, neighbor_name)
+                )
 
                 if link_id in drawn_links:
                     continue
 
                 end_x, end_y = self.layout.screen_coords[neighbor_name]
 
-                arcade.draw_line(
-                    start_x, start_y, end_x, end_y, arcade.color.GRAY, 2
-                )
+                self._draw_single_link(start_x, start_y, end_x, end_y)
 
                 if link_id in drones_on_links:
-                    drones = drones_on_links[link_id]
-                    text: str = ", ".join(f"D{d}" for d in drones)
-
-                    mid_x = (start_x + end_x) // 2
-                    mid_y = (start_y + end_y) // 2
-
-                    arcade.draw_circle_filled(
-                        mid_x, mid_y, 14, arcade.color.YELLOW
+                    self._draw_drones_circle(
+                        start_x, start_y,
+                        end_x, end_y, drones_on_links[link_id]
                     )
-                    arcade.draw_circle_outline(
-                        mid_x, mid_y, 14, arcade.color.BLACK, 1
-                    )
-
-                    arcade.Text(
-                        text=text,
-                        x=mid_x,
-                        y=mid_y,
-                        color=arcade.color.BLACK,
-                        font_size=10,
-                        anchor_x="center",
-                        anchor_y="center",
-                        bold=True,
-                    ).draw()
-
                 drawn_links.add(link_id)
 
     def _draw_nodes(
         self, drones_on_nodes: dict[str, int]
-    ) -> tuple[str, int, int] | None:
-        hovered_node: tuple[str, int, int] | None = None
+    ) -> HoveredNode | None:
+        hovered_node: HoveredNode | None = None
 
         for node in self.layout.graph.nodes.values():
-            if node.name not in self.layout.screen_coords:
-                continue
-
             screen_x, screen_y = self.layout.screen_coords[node.name]
             node_color = self.get_arcade_color(node.zone_color)
 
@@ -149,18 +151,23 @@ class FlyInVisualizer(arcade.Window):
                 self.mouse_x - screen_x, self.mouse_y - screen_y
             )
             if distance <= 20.0:
-                hovered_node = (node.name, screen_x, screen_y)
+                hovered_node = HoveredNode(
+                    name=node.name,
+                    type=node.zone_type,
+                    x=screen_x,
+                    y=screen_y)
 
         return hovered_node
 
-    def _draw_tooltip(self, hovered_node: tuple[str, int, int]) -> None:
-        name, sx, sy = hovered_node
-
-        box_width: int = len(name) * 10
-        box_height: int = 24
-
-        center_x: float = float(sx)
-        center_y: float = sy + 35.0
+    def _draw_tooltip(self, hovered_node: HoveredNode) -> None:
+        tooltip_text: str = (f"hub: {hovered_node.name}\n"
+                             f"zone_type: {hovered_node.type}")
+        max_length = max(len(hovered_node.name)+5, len(hovered_node.type)+11)
+        box_width: int = (max_length * 10)
+        box_height: int = 42
+        margin: float = 20.0
+        center_x: float = self.width - (box_width / 2.0) - margin
+        center_y: float = self.height - (box_height / 2.0) - margin
         half_w: float = box_width / 2.0
         half_h: float = box_height / 2.0
 
@@ -173,15 +180,18 @@ class FlyInVisualizer(arcade.Window):
 
         arcade.draw_polygon_filled(box_points, arcade.color.WHITE)
         arcade.draw_polygon_outline(box_points, arcade.color.BLACK, 1)
-
         arcade.Text(
-            text=name,
-            x=sx,
-            y=sy + 30,
+            text=tooltip_text,
+            x=center_x,
+            y=center_y,
             color=arcade.color.BLACK,
             font_size=12,
             anchor_x="center",
+            anchor_y="center",
+            align="center",
+            multiline=True,
             bold=True,
+            width=int(box_width),
         ).draw()
 
     def _draw_ui(self) -> None:

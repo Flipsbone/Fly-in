@@ -176,7 +176,7 @@ class PathFinder:
             ))
 
     def solve(self) -> list[str]:
-        start_state = TimeNode(turn=0, name=self.graph.start_name)
+        start_state: TimeNode = TimeNode(turn=0, name=self.graph.start_name)
         current: TimeNode = start_state
 
         heapq.heappush(self.not_visited, QueueItem(

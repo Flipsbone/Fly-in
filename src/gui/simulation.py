@@ -1,3 +1,6 @@
+from src.gui.models_gui import DronePositions
+
+
 class SimulationState:
 
     def __init__(self, drone_paths: dict[int, list[str]]) -> None:
@@ -6,8 +9,6 @@ class SimulationState:
         self.max_turn: int = self._calculate_max_turn()
 
     def _calculate_max_turn(self) -> int:
-        if not self.drone_paths:
-            return 0
         return max(len(path) for path in self.drone_paths.values()) - 1
 
     def next_turn(self) -> None:
@@ -18,31 +19,23 @@ class SimulationState:
         if self.current_turn > 0:
             self.current_turn -= 1
 
-    def get_drones_positions(self) -> tuple[
-            dict[str, int], dict[tuple[str, str], list[int]]]:
-
-        drones_on_nodes: dict[str, int] = {}
-        drones_on_links: dict[tuple[str, str], list[int]] = {}
+    def get_drones_positions(self) -> DronePositions:
+        positions = DronePositions()
 
         for drone_id, path in self.drone_paths.items():
-            if not path:
-                continue
-
-            t: int = min(self.current_turn, len(path) - 1)
-            location: str = path[t]
+            turn: int = min(self.current_turn, len(path) - 1)
+            location: str = path[turn]
 
             if '-' in location:
-                try:
-                    n1, n2 = location.split('-')
-                    link_id: tuple[str, str] = min(n1, n2), max(n1, n2)
+                node_1, node_2 = location.split('-')
+                link_id: tuple[str, str] = (
+                    min(node_1, node_2), max(node_1, node_2))
 
-                    if link_id not in drones_on_links:
-                        drones_on_links[link_id] = []
-                    drones_on_links[link_id].append(drone_id)
-                except ValueError:
-                    pass
+                if link_id not in positions.on_links:
+                    positions.on_links[link_id] = []
+                positions.on_links[link_id].append(drone_id)
             else:
-                drones_on_nodes[location] = drones_on_nodes.get(
+                positions.on_nodes[location] = positions.on_nodes.get(
                     location, 0) + 1
 
-        return drones_on_nodes, drones_on_links
+        return positions

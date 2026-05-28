@@ -3,7 +3,7 @@ from src.algo.graph import Graph
 
 class GraphLayout:
 
-    def __init__(self, graph: Graph, padding: int = 60) -> None:
+    def __init__(self, graph: Graph, padding: int) -> None:
         self.graph = graph
         self.padding = padding
         self.screen_coords: dict[str, tuple[int, int]] = {}
