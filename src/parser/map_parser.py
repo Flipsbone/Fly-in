@@ -12,7 +12,7 @@ from src.models.data_map import DataMap
 
 class MapParser:
     def __init__(self) -> None:
-        self.nb_drones: int = 0
+        self.nb_drones: int
         self.zones: dict[str, Zone_Approval] = {}
         self.connections: dict[str, Connection_Approval] = {}
         self.start_node: Zone_Approval | None = None
@@ -105,9 +105,14 @@ class MapParser:
             self.nb_drones = validate_drone.nb_drones
         except ValueError:
             raise ValueError(
-                f"--- line {line_number} --- \n"
-                f"Parsing error: drone '{value_str}' must be integer > 0"
-            )
+                    f"--- line {line_number} --- \n"
+                    f"Parsing error: drone '{value_str}' must be integer > 0"
+                )
+        else:
+            if nb_drones > 500:
+                raise ValueError(
+                    f"--- line {line_number} --- \n"
+                    "nb_drones to high value must be under 500")
 
     def _parse_hub(
             self,

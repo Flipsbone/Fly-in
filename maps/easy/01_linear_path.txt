@@ -2,7 +2,7 @@
 # Si la priorité fonctionne, D1 ira sur route_prioritaire
 nb_drones: 2
 
-start_hub: start 0 0 [max_drones=2]
+start_hub: start 0 0 [zmax_drones=2]
 hub: route_normale 1 1 [zone=normal color=blue]
 hub: route_prioritaire 1 -1 [zone=priority color=yellow]
 end_hub: goal 2 0 [max_drones=2]
