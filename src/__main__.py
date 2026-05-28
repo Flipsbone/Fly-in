@@ -38,6 +38,8 @@ def main() -> None:
             text: list[str] = []
             for turn, location in enumerate(path):
                 table.reserve(turn, location)
+                if "-" in location:
+                    table.reserve(turn + 1, location)
                 text.append(f"D{drone_id}-{location} Turn={turn}")
                 if turn > 0 and path[turn - 1] != location:
                     prev_location = path[turn - 1]

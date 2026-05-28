@@ -1,13 +1,11 @@
-# Map de test : Egalité parfaite de poids
-# Si la priorité fonctionne, D1 ira sur route_prioritaire
+# Easy Level 1: Simple linear path
 nb_drones: 2
 
-start_hub: start 0 0 [zmax_drones=2]
-hub: route_normale 1 1 [zone=normal color=blue]
-hub: route_prioritaire 1 -1 [zone=priority color=yellow]
-end_hub: goal 2 0 [max_drones=2]
+start_hub: start 0 0 [color=green]
+hub: waypoint1 1 0 [color=blue]
+hub: waypoint2 2 0 [color=blue]
+end_hub: goal 3 0 [color=red]
 
-connection: start-route_normale
-connection: start-route_prioritaire
-connection: route_normale-goal
-connection: route_prioritaire-goal
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-goal

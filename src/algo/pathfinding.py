@@ -36,11 +36,13 @@ class PathFinder:
         queue: deque[str] = deque([self.graph.start_name])
         visited: set[str] = {self.graph.start_name}
 
+        if self.graph.nodes[self.graph.start_name].zone_type == "blocked":
+            return False
+
         while queue:
             current = queue.popleft()
             if current == self.graph.end_name:
                 return True
-
             for neighbor_name in self.graph.nodes[current].neighbors:
                 if neighbor_name not in visited:
                     visited.add(neighbor_name)
@@ -83,6 +85,26 @@ class PathFinder:
                 state=next_state
             ))
 
+    def _restricted_path_available(
+            self,
+            next_turn: int,
+            route_name: str,
+            link_capacity: int,
+            neighbor_node: Node,
+            ) -> bool:
+
+        turns = (next_turn + 1, next_turn + 2)
+        resources = (
+            (route_name, link_capacity),
+            (neighbor_node.name, neighbor_node.max_drones),
+        )
+
+        return all(
+            self.reservation.is_available(turn, res_name, res_capacity)
+            for turn in turns
+            for res_name, res_capacity in resources
+        )
+
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         self._wait(current)
         current_node: Node = self.graph.nodes[current.name]
@@ -103,15 +125,9 @@ class PathFinder:
                 continue
 
             if neigbor_node.zone_type == "restricted":
-                if not self.reservation.is_available(
-                        next_turn + 1,
-                        route_name, link_capacity):
-                    continue
-
-                if not self.reservation.is_available(
-                        next_turn + 1,
-                        neigbor_node.name,
-                        neigbor_node.max_drones):
+                if not self._restricted_path_available(
+                        next_turn, route_name,
+                        link_capacity, neigbor_node):
                     continue
 
                 new_weight = self.tab[current]["weight"] + neigbor_node.cost
