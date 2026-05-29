@@ -11,6 +11,12 @@ from src.models.data_map import DataMap
 
 
 class MapParser:
+    """Parse a textual map file into a `DataMap`.
+
+    The parser checks format rules and uses pydantic validators to
+    normalize and validate zone and connection metadata.
+    """
+
     def __init__(self) -> None:
         self.nb_drones: int
         self.zones: dict[str, Zone_Approval] = {}
@@ -23,6 +29,17 @@ class MapParser:
         self.end_hub_count: int = 0
 
     def parse_map(self, map_file: TextIO) -> DataMap:
+        """Read and parse `map_file` returning a `DataMap`.
+
+        Args:
+            map_file: Open text file to read lines from.
+
+        Returns:
+            `DataMap` with validated zones and connections.
+
+        Raises:
+            ValueError: On syntax errors or validation failures.
+        """
 
         flag_start_hub: bool = False
         flag_end_hub: bool = False
@@ -92,6 +109,10 @@ class MapParser:
         )
 
     def _parse_nb_drones(self, value_str: str, line_number: int) -> None:
+        """Parse and validate the `nb_drones` line.
+
+        Ensures the value is an integer and within allowed limits.
+        """
         if self.has_drones_line:
             raise ValueError(f"--- line {line_number} --- \n"
                              "Duplicate nb_drones")
@@ -120,6 +141,11 @@ class MapParser:
             value_str: str,
             clean_line: str,
             line_number: int) -> None:
+        """Parse a hub or start/end hub line and validate it.
+
+        The method also enforces that `nb_drones` was defined before
+        any hub lines.
+        """
 
         if not self.has_drones_line:
             raise ValueError(f"--- line {line_number} --- \n Missing "
@@ -235,6 +261,11 @@ class MapParser:
                              f"Parsing Error : {msg}")
 
     def _validate_parsed_map(self) -> tuple[Zone_Approval, Zone_Approval]:
+        """Final validation and normalization after parsing all lines.
+
+        This method enforces single start/end hubs and sets hub
+        capacities to the parsed number of drones.
+        """
 
         if self.start_hub_count != 1 or self.end_hub_count != 1:
             raise ValueError("Map must have exactly one start_hub"

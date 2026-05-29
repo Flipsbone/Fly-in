@@ -3,10 +3,16 @@ from typing import Any
 
 
 class Drone_Approval(BaseModel):
+    """Validation model for the drone count."""
     nb_drones: int = Field(ge=1)
 
 
 class Zone_Approval(BaseModel):
+    """Validation and normalization for zone (hub) lines.
+
+    The model supports extracting optional metadata such as color,
+    zone type and `max_drones` from a bracketed [..] string.
+    """
     name: str
     x: int
     y: int
@@ -111,6 +117,7 @@ class Zone_Approval(BaseModel):
 
 
 class Connection_Approval(BaseModel):
+    """Validation for a connection line and optional metadata."""
     link_1: str
     link_2: str
     max_link_capacity: int = 1
@@ -152,6 +159,11 @@ class Connection_Approval(BaseModel):
 
     @model_validator(mode="after")
     def validate_link_rules(self) -> 'Connection_Approval':
+        """Validate basic rules and normalize link order.
+
+        Ensures a connection does not link to itself and orders link
+        names so the tuple key is consistent.
+        """
         if self.link_1 == self.link_2:
             raise ValueError("link cannot connect to itself")
         if self.link_1 > self.link_2:

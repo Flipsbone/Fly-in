@@ -8,9 +8,20 @@ from src.gui.models_gui import HoveredNode
 
 
 class FlyInVisualizer(arcade.Window):
+    """Window that renders the graph and drone simulation.
+
+    The visualizer uses `SimulationState` to know where drones are
+    and `GraphLayout` to compute screen positions.
+    """
 
     def __init__(
             self, graph: Graph, drone_paths: dict[int, list[str]]) -> None:
+        """Create the visualizer window.
+
+        Args:
+            graph: Graph instance describing nodes and links.
+            drone_paths: Mapping drone id -> list of locations for render.
+        """
 
         super().__init__(
             1024, 768, "Fly-in: Drone Routing Visualizer", resizable=True
@@ -25,21 +36,41 @@ class FlyInVisualizer(arcade.Window):
         arcade.set_background_color(arcade.color.ALICE_BLUE)
 
     def setup(self) -> None:
+        """Prepare layout and any needed resources before drawing."""
         self.layout.recalculate(self.width, self.height)
 
     def get_arcade_color(self, color_str: str | None) -> (
             tuple[int, int, int] | tuple[int, int, int, int]):
+        """Return an `arcade.color` tuple for a color name.
+
+        If `color_str` is None or unknown, return a default color.
+
+        Args:
+            color_str: The color name as a string.
+
+        Returns:
+            A tuple representing an RGB(A) color understood by Arcade.
+        """
         if not color_str:
             return arcade.color.LIGHT_GRAY
         color_name: str = color_str.upper()
         return getattr(arcade.color, color_name, arcade.color.DARK_GRAY)
 
     def on_resize(self, width: int, height: int) -> None:
+        """Handle window resize by updating the layout."""
         super().on_resize(width, height)
         self.setup()
 
     def on_mouse_motion(
             self, x: float, y: float, dx: float, dy: float) -> None:
+        """Track mouse position used for hover tooltips.
+
+        Args:
+            x: New mouse x position in pixels.
+            y: New mouse y position in pixels.
+            dx: Delta x since last event.
+            dy: Delta y since last event.
+        """
 
         self.mouse_x = x
         self.mouse_y = y
@@ -75,6 +106,15 @@ class FlyInVisualizer(arcade.Window):
         start_y: int, end_x: int,
         end_y: int, drones: list[int]
     ) -> None:
+        """Draw a circle with drone ids for drones on a link.
+
+        Args:
+            start_x: Start point x in pixels.
+            start_y: Start point y in pixels.
+            end_x: End point x in pixels.
+            end_y: End point y in pixels.
+            drones: List of drone ids to display.
+        """
 
         mid_x = (start_x + end_x) // 2
         mid_y = (start_y + end_y) // 2
@@ -96,6 +136,11 @@ class FlyInVisualizer(arcade.Window):
 
     def _draw_connections(
             self, drones_on_links: dict[tuple[str, str], list[int]]) -> None:
+        """Draw all graph links and any drones currently on them.
+
+        Args:
+            drones_on_links: Mapping link id -> list of drone ids.
+        """
 
         drawn_links: set[tuple[str, str]] = set()
 
@@ -125,6 +170,15 @@ class FlyInVisualizer(arcade.Window):
     def _draw_nodes(
         self, drones_on_nodes: dict[str, int]
     ) -> HoveredNode | None:
+        """Draw nodes and return hovered node information if any.
+
+        Args:
+            drones_on_nodes: Mapping node name -> drone count.
+
+        Returns:
+            HoveredNode instance when the mouse is hovering a node,
+            otherwise None.
+        """
         hovered_node: HoveredNode | None = None
 
         for node in self.layout.graph.nodes.values():
@@ -160,6 +214,11 @@ class FlyInVisualizer(arcade.Window):
         return hovered_node
 
     def _draw_tooltip(self, hovered_node: HoveredNode) -> None:
+        """Draw a small tooltip box for `hovered_node`.
+
+        The tooltip shows basic node information near the top-right
+        corner of the window.
+        """
         tooltip_text: str = (f"hub: {hovered_node.name}\n"
                              f"zone_type: {hovered_node.type}")
         max_length = max(len(hovered_node.name)+5, len(hovered_node.type)+11)
@@ -195,6 +254,7 @@ class FlyInVisualizer(arcade.Window):
         ).draw()
 
     def _draw_ui(self) -> None:
+        """Draw simple UI text such as the current turn."""
         arcade.Text(
             text=f"Turn: {self.state.current_turn} / {self.state.max_turn}",
             x=20,

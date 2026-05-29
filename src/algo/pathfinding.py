@@ -7,7 +7,20 @@ from src.algo.models_algo import TimeNode, PathRecord, QueueItem
 
 
 class PathFinder:
+    """Find time-expanded routes using reservation constraints.
+
+    The path finder respects node and link capacities stored in a
+    `ReservationTable`. It builds a time-expanded search table and
+    reconstructs the found path when the end state is reached.
+    """
+
     def __init__(self, graph: Graph, reservation: ReservationTable):
+        """Initialize the solver with a graph and a reservation table.
+
+        Args:
+            graph: Graph containing nodes and topology.
+            reservation: ReservationTable used to check availability.
+        """
         self.graph: Graph = graph
         self.reservation: ReservationTable = reservation
         self.tab: dict[TimeNode, PathRecord] = {}
@@ -15,6 +28,14 @@ class PathFinder:
         self.visited: set[TimeNode] = set()
 
     def is_one_solution(self) -> bool:
+        """Quick check if a basic path exists ignoring time.
+
+        Performs a breadth-first search over nodes to see if the end
+        node is reachable from the start node, ignoring reservations.
+
+        Returns:
+            True when there is at least a structural path, else False.
+        """
         queue: deque[str] = deque([self.graph.start_name])
         visited: set[str] = {self.graph.start_name}
 
@@ -34,6 +55,11 @@ class PathFinder:
 
     def _reconstruct_path(
             self, end_state: TimeNode, start_state: TimeNode) -> list[str]:
+        """Rebuild the path from `start_state` to `end_state`.
+
+        The method returns a list of node and link names
+        representing the route.
+        """
 
         path: list[str] = [end_state.name]
         current_step: TimeNode = end_state
@@ -53,6 +79,11 @@ class PathFinder:
             neighbor_name: str,
             neigbor_node: Node,
             next_turn: int) -> None:
+        """Update internal tables when moving to a neighbor node.
+
+        This pushes a new candidate state into the heap with the
+        appropriate priority and updates weights in `self.tab`.
+        """
 
         next_state = TimeNode(next_turn, neighbor_name)
         new_weight = self.tab[current].weight + neigbor_node.cost
@@ -77,6 +108,11 @@ class PathFinder:
             link_capacity: int,
             neighbor_node: Node,
             ) -> bool:
+        """Return True when the restricted path resources are free.
+
+        The method checks both the link and the target node for the
+        next two turns that a restricted crossing would require.
+        """
 
         turns = (next_turn + 1, next_turn + 2)
         resources = (
@@ -95,6 +131,12 @@ class PathFinder:
             neighbor_name: str, neigbor_node: Node,
             next_turn: int, route_name: str,
             link_capacity: int) -> None:
+        """Handle neighbor nodes with `restricted` zone type.
+
+        Restricted nodes require reserving the intermediate link and
+        an extra turn on the target node. This method pushes final
+        states to the search heap if resources are available.
+        """
 
         if not self._restricted_path_available(
                 next_turn, route_name, link_capacity, neigbor_node):
@@ -125,6 +167,12 @@ class PathFinder:
             ))
 
     def _evaluate_neighbors(self, current: TimeNode) -> None:
+        """Evaluate neighbors of `current` and push valid moves.
+
+        The method checks each neighbor for capacity and zone rules
+        then either schedules a normal move or handles restricted
+        transitions specially.
+        """
         self._wait(current)
         current_node: Node = self.graph.nodes[current.name]
 
@@ -156,6 +204,7 @@ class PathFinder:
                 self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
 
     def _wait(self, current: TimeNode) -> None:
+        """Schedule a wait action (stay on current node for one turn)."""
         wait_turn = current.turn + 1
         new_weight = self.tab[current].weight + 1
         wait_state = TimeNode(wait_turn, current.name)
@@ -176,6 +225,15 @@ class PathFinder:
             ))
 
     def solve(self) -> list[str]:
+        """Run the search and return a list of visited names as a path.
+
+        Returns:
+            A path represented as a list of node or link identifiers.
+
+        Raises:
+            ValueError: If no path could be found under current
+                reservation constraints.
+        """
         start_state: TimeNode = TimeNode(turn=0, name=self.graph.start_name)
         current: TimeNode = start_state
 

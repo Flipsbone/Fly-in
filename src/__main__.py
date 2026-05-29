@@ -13,6 +13,20 @@ def compute_drone_paths(
         data_map: DataMap,
         graph: Graph,
         table: ReservationTable) -> dict[int, list[str]]:
+    """calcul paths for each drone using the pathfinder.
+
+    The function solves for a path and reserves the
+    route in the reservation table. It returns a mapping
+    from drone id to list of zone/link names representing the path.
+
+    Args:
+        data_map: Parsed map and drone count.
+        graph: Graph built from the parsed map.
+        table: Reservation table to reserve turns and links.
+
+    Returns:
+        Mapping of drone id to route (list of location strings).
+    """
 
     remaining_drones = data_map.nb_drones
     drone_id = 1
