@@ -30,9 +30,9 @@ class QueueItem:
     """Item stored on the heap during search.
 
     Fields order controls heap comparison. Lower `weight` is
-    prioritized; 
+    prioritized;
     `is_not_priority` -> 0 if zone == priority
-    and 
+    and
     `is_move` -> 0 if wait. Make sure to prioritize the wait state rather
             than moving and coming back the next turn at the same place.
     """
