@@ -28,7 +28,7 @@ class GraphLayout:
         """Rescales `screen_coords` for the current window size.
 
         This method rescales node coordinates to fit into the inner
-        drawing area and stores integer pixel positions in 
+        drawing area and stores integer pixel positions in
         `self.screen_coords`.
 
         Args:
