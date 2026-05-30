@@ -50,7 +50,7 @@ def compute_drone_paths(
                     route = (f"{min(prev_location, location)}-"
                              f"{max(prev_location, location)}")
                     table.reserve(turn, route)
-
+        table.park(path)
         print(f"--- Drone {drone_id} ---")
         print(f"Path found in {len(path) - 1} steps.")
         print(" ".join(text))
