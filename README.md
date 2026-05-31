@@ -1,8 +1,8 @@
 *This project has been created as part of the 42 curriculum by advacher.*
 
 ## Description
-Fly-in is an autonomous drone routing simulation. The main objective of this project is to design a system that efficiently navigates a fleet of drones from a central starting base to a target end location. The network is represented as a dynamic graph of connected zones. The challenge is to find the most efficient paths to minimize the total number of simulation turns while strictly respecting movement rules and zone capacity constraints.
-
+![alt text](fly-in-42.png)
+**Fly-in** is an autonomous drone routing simulation. The main objective of this project is to design a system that efficiently navigates a fleet of drones from a central starting base to a target end location. The network is represented as a dynamic graph of connected zones. The challenge is to find the most efficient paths to minimize the total number of simulation turns while strictly respecting movement rules and zone capacity constraints.
 ## Instructions
 The project is built with Python 3.10+. We use `uv` for fast dependency management and `arcade` for the graphical interface. 
 
@@ -14,9 +14,13 @@ To install the project dependencies, run:
 make install
 ```
 **Execution**
-To run the simulation with a specific map, use:
+To run the program 
+```bash
+  make run
 ```
-  make install
+To run the simulation with a specific map, use:
+```bash
+  make run MAP=maps/easy/01_linear_path.txt
 ```
 
 **Other Commands**
