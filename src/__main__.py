@@ -9,6 +9,28 @@ from src.algo.pathfinding import PathFinder
 from src.gui.visualizer import FlyInVisualizer
 
 
+def display_terminal(drone_paths: dict[int, list[str]],
+                     drone_turn: dict[int, int]) -> None:
+
+    max_turn: int = max(len(path) for path in drone_paths.values())
+    drone_moved: dict[int, int] = {}
+    for turn in range(1, max_turn):
+        line_output: list[str] = []
+        for drone_id, path in drone_paths.items():
+            if turn < len(path):
+                current_node: str = path[turn]
+                prev_node: str = path[turn - 1]
+                if current_node != prev_node:
+                    line_output.append(f"D{drone_id}-{current_node}")
+                    drone_moved[turn] = drone_moved.get(turn, 0) + 1
+        if line_output:
+            print(" ".join(line_output))
+    sum_turn: int = sum(turn for turn in drone_turn.values())
+    print(f"\nThe average number of turns per drone {sum_turn/drone_id}\n")
+    for turn_index, count in drone_moved.items():
+        print(f"Number of drones moved at the turn {turn_index} is {count}")
+
+
 def compute_drone_paths(
         data_map: DataMap,
         graph: Graph,
@@ -31,18 +53,17 @@ def compute_drone_paths(
     remaining_drones = data_map.nb_drones
     drone_id = 1
     drone_paths: dict[int, list[str]] = {}
+    drone_turn: dict[int, int] = {}
 
     while remaining_drones > 0:
         solver = PathFinder(graph, table)
         path = solver.solve()
         drone_paths[drone_id] = path
 
-        text: list[str] = []
         for turn, location in enumerate(path):
             table.reserve(turn, location)
             if "-" in location:
                 table.reserve(turn + 1, location)
-            text.append(f"D{drone_id}-{location} Turn={turn}")
 
             if turn > 0 and path[turn - 1] != location:
                 prev_location = path[turn - 1]
@@ -50,13 +71,14 @@ def compute_drone_paths(
                     route = (f"{min(prev_location, location)}-"
                              f"{max(prev_location, location)}")
                     table.reserve(turn, route)
-        table.park(path)
-        print(f"--- Drone {drone_id} ---")
-        print(f"Path found in {len(path) - 1} steps.")
-        print(" ".join(text))
 
+        table.park(path)
         remaining_drones -= 1
         drone_id += 1
+        drone_turn[drone_id] = (len(path) - 1)
+
+    display_terminal(drone_paths, drone_turn)
+
     return drone_paths
 
 

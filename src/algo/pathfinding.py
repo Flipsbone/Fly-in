@@ -92,13 +92,13 @@ class PathFinder:
             self.tab[next_state] = PathRecord(
                 weight=new_weight, come_from=current)
 
-        heapq.heappush(self.not_visited, QueueItem(
-                weight=new_weight,
-                is_not_priority=(
-                    0 if neighbor_node.zone_type == "priority" else 1),
-                is_move=1,
-                state=next_state
-            ))
+            heapq.heappush(self.not_visited, QueueItem(
+                    weight=new_weight,
+                    is_not_priority=(
+                        0 if neighbor_node.zone_type == "priority" else 1),
+                    is_move=1,
+                    state=next_state
+                ))
 
     def _restricted_path_available(
             self,
@@ -146,22 +146,24 @@ class PathFinder:
 
         restricted_state = TimeNode(next_turn + 1, neighbor_node.name)
         connection_state = TimeNode(next_turn, route_name)
+        if (restricted_state not in self.tab or
+                new_weight < self.tab[restricted_state].weight):
 
-        self.tab[connection_state] = PathRecord(
-            weight=self.tab[current].weight,
-            come_from=current
-        )
-        self.tab[restricted_state] = PathRecord(
-            weight=new_weight,
-            come_from=connection_state
-        )
+            self.tab[connection_state] = PathRecord(
+                weight=self.tab[current].weight,
+                come_from=current
+            )
+            self.tab[restricted_state] = PathRecord(
+                weight=new_weight,
+                come_from=connection_state
+            )
 
-        heapq.heappush(self.not_visited, QueueItem(
-            weight=new_weight,
-            is_not_priority=1,
-            is_move=1,
-            state=restricted_state
-        ))
+            heapq.heappush(self.not_visited, QueueItem(
+                weight=new_weight,
+                is_not_priority=1,
+                is_move=1,
+                state=restricted_state
+            ))
 
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         """Evaluate neighbors of `current` and push valid moves.
@@ -209,18 +211,24 @@ class PathFinder:
         new_weight = self.tab[current].weight + 1
         wait_state = TimeNode(wait_turn, current.name)
 
-        self.tab[wait_state] = PathRecord(
-            weight=new_weight,
-            come_from=current)
+        if (wait_state not in self.tab or
+                new_weight < self.tab[wait_state].weight):
+            self.tab[wait_state] = PathRecord(
+                weight=new_weight,
+                come_from=current)
 
-        heapq.heappush(self.not_visited, QueueItem(
-            weight=new_weight,
-            is_not_priority=(
-                0 if self.graph.nodes[current.name].zone_type ==
-                "priority" else 1),
-            is_move=0,
-            state=wait_state
-        ))
+            self.tab[wait_state] = PathRecord(
+                weight=new_weight,
+                come_from=current)
+
+            heapq.heappush(self.not_visited, QueueItem(
+                weight=new_weight,
+                is_not_priority=(
+                    0 if self.graph.nodes[current.name].zone_type ==
+                    "priority" else 1),
+                is_move=0,
+                state=wait_state
+            ))
 
     def solve(self) -> list[str]:
         """Run the search and return a list of visited names as a path.
