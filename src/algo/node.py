@@ -17,7 +17,7 @@ class Node:
             max_drones: int,
             x: int,
             y: int
-            ):
+            ) -> None:
 
         self.name = name
         self.zone_type = zone_type

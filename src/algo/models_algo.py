@@ -27,9 +27,9 @@ class PathRecord:
 
 @dataclass(order=True)
 class QueueItem:
-    """Item stored on the heap during search.
+    """Item stored on the heapq during search.
 
-    Fields order controls heap comparison. Lower `weight` is
+    Fields order controls heapq comparison. Lower `weight` is
     prioritized;
     `is_not_priority` -> 0 if zone == priority
     and

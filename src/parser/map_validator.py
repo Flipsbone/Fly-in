@@ -159,7 +159,7 @@ class Connection_Approval(BaseModel):
 
     @model_validator(mode="after")
     def validate_link_rules(self) -> 'Connection_Approval':
-        """Validate basic rules and normalize link order.
+        """Validate and normalize link order.
 
         Ensures a connection does not link to itself and orders link
         names so the tuple key is consistent.

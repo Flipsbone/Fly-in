@@ -73,11 +73,10 @@ class PathFinder:
             current_step = prev_step
         return path[::-1]
 
-    def _maj_tab(
+    def _update_tab(
             self,
             current: TimeNode,
-            neighbor_name: str,
-            neigbor_node: Node,
+            neighbor_node: Node,
             next_turn: int) -> None:
         """Update internal tables when moving to a neighbor node.
 
@@ -85,8 +84,8 @@ class PathFinder:
         appropriate priority and updates weights in `self.tab`.
         """
 
-        next_state = TimeNode(next_turn, neighbor_name)
-        new_weight = self.tab[current].weight + neigbor_node.cost
+        next_state = TimeNode(next_turn, neighbor_node.name)
+        new_weight = self.tab[current].weight + neighbor_node.cost
 
         if (next_state not in self.tab
                 or new_weight < self.tab[next_state].weight):
@@ -96,7 +95,7 @@ class PathFinder:
         heapq.heappush(self.not_visited, QueueItem(
                 weight=new_weight,
                 is_not_priority=(
-                    0 if neigbor_node.zone_type == "priority" else 1),
+                    0 if neighbor_node.zone_type == "priority" else 1),
                 is_move=1,
                 state=next_state
             ))
@@ -114,8 +113,8 @@ class PathFinder:
         next two turns that a restricted crossing would require.
         """
 
-        turns = (next_turn + 1, next_turn + 2)
-        resources = (
+        turns: tuple[int, int] = (next_turn + 1, next_turn + 2)
+        resources: tuple[tuple[str, int], tuple[str, int]] = (
             (route_name, link_capacity),
             (neighbor_node.name, neighbor_node.max_drones),
         )
@@ -128,43 +127,41 @@ class PathFinder:
 
     def _process_restricted_neighbor(
             self, current: TimeNode,
-            neighbor_name: str, neigbor_node: Node,
-            next_turn: int, route_name: str,
+            neighbor_node: Node,
+            next_turn: int,
+            route_name: str,
             link_capacity: int) -> None:
         """Handle neighbor nodes with `restricted` zone type.
 
         Restricted nodes require reserving the intermediate link and
         an extra turn on the target node. This method pushes final
-        states to the search heap if resources are available.
+        states to the search heapq if resources are available.
         """
 
         if not self._restricted_path_available(
-                next_turn, route_name, link_capacity, neigbor_node):
+                next_turn, route_name, link_capacity, neighbor_node):
             return
 
-        new_weight = self.tab[current].weight + neigbor_node.cost
-        final_state = TimeNode(next_turn + 1, neighbor_name)
+        new_weight = self.tab[current].weight + neighbor_node.cost
 
-        if (final_state not in self.tab or
-                new_weight < self.tab[final_state].weight):
+        restricted_state = TimeNode(next_turn + 1, neighbor_node.name)
+        connection_state = TimeNode(next_turn, route_name)
 
-            connection_state = TimeNode(next_turn, route_name)
+        self.tab[connection_state] = PathRecord(
+            weight=self.tab[current].weight,
+            come_from=current
+        )
+        self.tab[restricted_state] = PathRecord(
+            weight=new_weight,
+            come_from=connection_state
+        )
 
-            self.tab[connection_state] = PathRecord(
-                weight=self.tab[current].weight,
-                come_from=current
-            )
-            self.tab[final_state] = PathRecord(
-                weight=new_weight,
-                come_from=connection_state
-            )
-
-            heapq.heappush(self.not_visited, QueueItem(
-                weight=new_weight,
-                is_not_priority=1,
-                is_move=1,
-                state=final_state
-            ))
+        heapq.heappush(self.not_visited, QueueItem(
+            weight=new_weight,
+            is_not_priority=1,
+            is_move=1,
+            state=restricted_state
+        ))
 
     def _evaluate_neighbors(self, current: TimeNode) -> None:
         """Evaluate neighbors of `current` and push valid moves.
@@ -193,36 +190,37 @@ class PathFinder:
 
             if neigbor_node.zone_type == "restricted":
                 self._process_restricted_neighbor(
-                    current, neighbor_name,
-                    neigbor_node, next_turn,
-                    route_name, link_capacity
+                    current,
+                    neigbor_node,
+                    next_turn,
+                    route_name,
+                    link_capacity
                 )
             else:
                 if not self.reservation.is_available(
                         next_turn, neigbor_node.name, neigbor_node.max_drones):
                     continue
-                self._maj_tab(current, neighbor_name, neigbor_node, next_turn)
+                self._update_tab(
+                    current, neigbor_node, next_turn)
 
     def _wait(self, current: TimeNode) -> None:
         """Schedule a wait action (stay on current node for one turn)."""
         wait_turn = current.turn + 1
         new_weight = self.tab[current].weight + 1
         wait_state = TimeNode(wait_turn, current.name)
-        if (wait_state not in self.tab or
-                new_weight < self.tab[wait_state].weight):
 
-            self.tab[wait_state] = PathRecord(
-                weight=new_weight,
-                come_from=current)
+        self.tab[wait_state] = PathRecord(
+            weight=new_weight,
+            come_from=current)
 
-            heapq.heappush(self.not_visited, QueueItem(
-                weight=new_weight,
-                is_not_priority=(
-                    0 if self.graph.nodes[current.name].zone_type ==
-                    "priority" else 1),
-                is_move=0,
-                state=wait_state
-            ))
+        heapq.heappush(self.not_visited, QueueItem(
+            weight=new_weight,
+            is_not_priority=(
+                0 if self.graph.nodes[current.name].zone_type ==
+                "priority" else 1),
+            is_move=0,
+            state=wait_state
+        ))
 
     def solve(self) -> list[str]:
         """Run the search and return a list of visited names as a path.
@@ -252,12 +250,9 @@ class PathFinder:
 
         while self.not_visited:
             current_item = heapq.heappop(self.not_visited)
-            current_weight = current_item.weight
             current = current_item.state
             if current.name == self.graph.end_name:
                 return self._reconstruct_path(current, start_state)
-            if current_weight > self.tab[current].weight:
-                continue
             if current in self.visited:
                 continue
             self.visited.add(current)

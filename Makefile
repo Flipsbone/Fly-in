@@ -1,7 +1,7 @@
 PYTHON = uv run python3
 MAIN = -m src
 SRC = src/
-MAP ?= maps/easy/01_linear_path.txt
+MAP = maps/easy/01_linear_path.txt
 
 all: install
 
