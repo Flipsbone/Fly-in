@@ -74,6 +74,39 @@ To enhance the user experience and make debugging easier, a graphical interface 
 
 * **Tooltips**: Hovering over a node with the mouse reveals its name, making it easy to track specific network hubs.
 
+## Input / Output
+Several sample maps are already provided in the maps directory to help you launch the project. 
+
+Here is an example of a simple linear path (Easy Level 1):
+```
+# Easy Level 1: Simple linear path
+nb_drones: 2
+
+start_hub: start 0 0 [color=green]
+hub: waypoint1 1 0 [color=blue]
+hub: waypoint2 2 0 [color=blue]
+end_hub: goal 3 0 [color=red]
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-goal
+```
+*Expected Output* :
+
+When executing the project with the map above, a standard output will look like this:
+```
+D1-waypoint1
+D1-waypoint2 D2-waypoint1
+D1-goal D2-waypoint2
+D2-goal
+
+The average number of turns per drone 3.5
+
+Number of drones moved at the turn 1 is 1
+Number of drones moved at the turn 2 is 2
+Number of drones moved at the turn 3 is 2
+Number of drones moved at the turn 4 is 1
+```
 ## Project Architecture
 Below is a visual representation of how the different components of **Fly-in** interact:
 ```mermaid

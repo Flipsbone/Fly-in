@@ -63,19 +63,12 @@ class FlyInVisualizer(arcade.Window):
 
     def on_mouse_motion(
             self, x: float, y: float, dx: float, dy: float) -> None:
-        """Track mouse position used for hover tooltips.
-
-        Args:
-            x: New mouse x position in pixels.
-            y: New mouse y position in pixels.
-            dx: Delta x since last event.
-            dy: Delta y since last event.
-        """
-
+        """Track mouse position used for hover tooltips."""
         self.mouse_x = x
         self.mouse_y = y
 
     def on_key_press(self, key: int, modifiers: int) -> None:
+        """Handle keyboard inputs for simulation navigation."""
         if key == arcade.key.RIGHT:
             self.state.next_turn()
         elif key == arcade.key.LEFT:
@@ -84,21 +77,26 @@ class FlyInVisualizer(arcade.Window):
             arcade.exit()
 
     def on_draw(self) -> None:
+        """Render the screen."""
         self.clear()
 
         positions = self.state.get_drones_positions()
-
-        self._draw_connections(positions.on_links)
-
+        hovered_link_text = self._draw_connections(positions.on_links)
         hovered_node = self._draw_nodes(positions.on_nodes)
+
         if hovered_node:
-            self._draw_tooltip(hovered_node)
+            node_text = (
+                f"hub: {hovered_node.name}\nzone_type: {hovered_node.type}")
+            self._draw_tooltip(node_text)
+        elif hovered_link_text:
+            self._draw_tooltip(hovered_link_text)
 
         self._draw_ui()
 
     def _draw_single_link(
         self, start_x: int, start_y: int, end_x: int, end_y: int
     ) -> None:
+        """Draw a single line between two coordinates."""
         arcade.draw_line(start_x, start_y, end_x, end_y, arcade.color.GRAY, 2)
 
     def _draw_drones_circle(
@@ -106,16 +104,8 @@ class FlyInVisualizer(arcade.Window):
         start_y: int, end_x: int,
         end_y: int, drones: list[int]
     ) -> None:
-        """Draw a circle with drone ids for drones on a link.
 
-        Args:
-            start_x: Start point x in pixels.
-            start_y: Start point y in pixels.
-            end_x: End point x in pixels.
-            end_y: End point y in pixels.
-            drones: List of drone ids to display.
-        """
-
+        """Draw a circle with drone ids for drones on a link."""
         mid_x = (start_x + end_x) // 2
         mid_y = (start_y + end_y) // 2
         text: str = ", ".join(f"D{d}" for d in drones)
@@ -134,15 +124,43 @@ class FlyInVisualizer(arcade.Window):
             bold=True,
         ).draw()
 
-    def _draw_connections(
-            self, drones_on_links: dict[tuple[str, str], list[int]]) -> None:
-        """Draw all graph links and any drones currently on them.
+    def _is_mouse_on_link(
+            self, start_x: int, start_y: int, end_x: int, end_y: int) -> bool:
+        """Roughly check if the mouse is hovering over a line segment.
 
         Args:
-            drones_on_links: Mapping link id -> list of drone ids.
+            start_x (int): The x-coordinate of the starting node.
+            start_y (int): The y-coordinate of the starting node.
+            end_x (int): The x-coordinate of the ending node.
+            end_y (int): The y-coordinate of the ending node.
+            self.mouse_x (float): The current x-coordinate of the mouse.
+            self.mouse_y (float): The current y-coordinate of the mouse.
+        Returns:
+            bool: True if the mouse is within the collision tolerance,
+            False otherwise.
         """
 
+        dist_to_start = math.hypot(
+            self.mouse_x - start_x, self.mouse_y - start_y)
+        dist_to_end = math.hypot(self.mouse_x - end_x, self.mouse_y - end_y)
+        line_length = math.hypot(end_x - start_x, end_y - start_y)
+
+        return (dist_to_start + dist_to_end) <= (line_length + 1.5)
+
+    def _draw_connections(
+            self, drones_on_links: dict[tuple[str, str],
+                                        list[int]]) -> str | None:
+        """Draw all graph links and return hovered link tooltip text if any.
+
+         Args:
+            drones_on_links : tuple of node names -> list of drone ids on that
+            link for current turn.
+        Returns:
+            str | None: Tooltip text for the hovered link, or None if no link
+            is hovered.
+            """
         drawn_links: set[tuple[str, str]] = set()
+        hovered_link_text: str | None = None
 
         for node in self.layout.graph.nodes.values():
             start_x, start_y = self.layout.screen_coords[node.name]
@@ -157,7 +175,6 @@ class FlyInVisualizer(arcade.Window):
                     continue
 
                 end_x, end_y = self.layout.screen_coords[neighbor_name]
-
                 self._draw_single_link(start_x, start_y, end_x, end_y)
 
                 if link_id in drones_on_links:
@@ -165,7 +182,13 @@ class FlyInVisualizer(arcade.Window):
                         start_x, start_y,
                         end_x, end_y, drones_on_links[link_id]
                     )
+                if self._is_mouse_on_link(start_x, start_y, end_x, end_y):
+                    hovered_link_text = (
+                        f"capacity: {node.neighbors[neighbor_name]}")
+
                 drawn_links.add(link_id)
+
+        return hovered_link_text
 
     def _draw_nodes(
         self, drones_on_nodes: dict[str, int]
@@ -173,11 +196,12 @@ class FlyInVisualizer(arcade.Window):
         """Draw nodes and return hovered node information if any.
 
         Args:
-            drones_on_nodes: Mapping node name -> drone count.
+            drones_on_nodes: Mapping of node names to the count
+                of drones on that node for the current turn.
 
         Returns:
-            HoveredNode instance when the mouse is hovering a node,
-            otherwise None.
+            HoveredNode | None: Information about the hovered node, or None if
+            no node is hovered.
         """
         hovered_node: HoveredNode | None = None
 
@@ -213,17 +237,14 @@ class FlyInVisualizer(arcade.Window):
 
         return hovered_node
 
-    def _draw_tooltip(self, hovered_node: HoveredNode) -> None:
-        """Draw a small tooltip box for `hovered_node`.
+    def _draw_tooltip(self, text: str) -> None:
+        """Draw a small tooltip box for the provided text."""
+        lines = text.split('\n')
+        max_length = max(len(line) for line in lines)
 
-        The tooltip shows basic node information near the top-right
-        corner of the window.
-        """
-        tooltip_text: str = (f"hub: {hovered_node.name}\n"
-                             f"zone_type: {hovered_node.type}")
-        max_length = max(len(hovered_node.name)+5, len(hovered_node.type)+11)
-        box_width: int = (max_length * 10)
-        box_height: int = 42
+        box_width: int = max(120, max_length * 10)
+        box_height: int = 20 * len(lines) + 20
+
         margin: float = 20.0
         center_x: float = self.width - (box_width / 2.0) - margin
         center_y: float = self.height - (box_height / 2.0) - margin
@@ -239,8 +260,9 @@ class FlyInVisualizer(arcade.Window):
 
         arcade.draw_polygon_filled(box_points, arcade.color.WHITE)
         arcade.draw_polygon_outline(box_points, arcade.color.BLACK, 1)
+
         arcade.Text(
-            text=tooltip_text,
+            text=text,
             x=center_x,
             y=center_y,
             color=arcade.color.BLACK,
