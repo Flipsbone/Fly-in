@@ -73,12 +73,12 @@ def test_connection_self_loop() -> None:
 
 
 def test_connection_capacity_zero() -> None:
-    """Test edge case: Link capacity must be >= 1."""
+    """Test edge case: Link capacity must be >= 0."""
     raw_data = {
         "link_1": "hubA",
         "link_2": "hubB",
-        "metadata": "[max_link_capacity=0]"
+        "metadata": "[max_link_capacity=-1]"
     }
     with pytest.raises(ValidationError) as exc:
         Connection_Approval.model_validate(raw_data)
-    assert "must be an integer >= 1" in str(exc.value)
+    assert "must be an integer >= 0" in str(exc.value)

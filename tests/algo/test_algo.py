@@ -16,10 +16,12 @@ def test_pathfinding_no_possible_path() -> None:
     node_start = MagicMock(spec=Node)
     node_start.neighbors = {}  # No neighbors! Isolated.
     node_start.zone_type = "normal"
+    node_start.max_drones = 1
 
     node_end = MagicMock(spec=Node)
     node_end.neighbors = {}
     node_end.zone_type = "normal"
+    node_end.max_drones = 1
 
     mock_graph.nodes = {"start": node_start, "end": node_end}
     mock_reservation = MagicMock(spec=ReservationTable)
@@ -39,14 +41,17 @@ def test_pathfinding_all_paths_blocked() -> None:
     node_start = MagicMock(spec=Node)
     node_start.neighbors = {"wall": 1}
     node_start.zone_type = "normal"
+    node_start.max_drones = 1
 
     node_wall = MagicMock(spec=Node)
     node_wall.neighbors = {"start": 1, "end": 1}
     node_wall.zone_type = "blocked"  # Completely impassable
+    node_wall.max_drones = 0
 
     node_end = MagicMock(spec=Node)
     node_end.neighbors = {"wall": 1}
     node_end.zone_type = "normal"
+    node_end.max_drones = 1
 
     mock_graph.nodes = {
         "start": node_start,
