@@ -216,9 +216,6 @@ class PathFinder:
 
         if (wait_state not in self.tab or
                 new_weight < self.tab[wait_state].weight):
-            self.tab[wait_state] = PathRecord(
-                weight=new_weight,
-                come_from=current)
 
             self.tab[wait_state] = PathRecord(
                 weight=new_weight,
