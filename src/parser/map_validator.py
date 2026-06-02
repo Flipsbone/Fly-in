@@ -82,12 +82,12 @@ class Zone_Approval(BaseModel):
 
             match key:
                 case "color":
-                    value_isalpha: bool = value_str.isalpha()
+                    value_isalpha: bool = value_str.isalnum()
                     if not value_isalpha:
                         raise ValueError(f"metadata value after '=' is "
                                          f" '{value_str} ' the format must"
                                          " be 'color=green' and the color"
-                                         " must be single-word strings"
+                                         " must be single word strings"
                                          " (e.g., red, blue, gray).")
 
                     zone_metadata[key] = value_str
@@ -105,9 +105,9 @@ class Zone_Approval(BaseModel):
                     except ValueError:
                         raise ValueError(f"max_drone value '{value_str}' "
                                          "must be an integer")
-                    if val_int < 1:
+                    if val_int < 0:
                         raise ValueError(f"metadata value: '{value_str}' "
-                                         "must be >= 1")
+                                         "must be >= 0")
 
                     zone_metadata[key] = val_int
 
@@ -151,8 +151,8 @@ class Connection_Approval(BaseModel):
             max_drone_value = int(max_drone_value_str)
         except ValueError:
             raise ValueError("max_link_capacity must be an integer")
-        if max_drone_value < 1:
-            raise ValueError("max_link_capacity must be an integer >= 1")
+        if max_drone_value < 0:
+            raise ValueError("max_link_capacity must be an integer >= 0")
         data["max_link_capacity"] = max_drone_value
 
         return data
