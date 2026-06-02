@@ -24,6 +24,7 @@ class MapParser:
         self.start_node: Zone_Approval | None = None
         self.end_node: Zone_Approval | None = None
         self.used_coordinates: set[tuple[int, int]] = set()
+        self.used_hub: dict[str, int] = {}
         self.has_drones_line: bool = False
         self.start_hub_count: int = 0
         self.end_hub_count: int = 0
@@ -177,6 +178,14 @@ class MapParser:
                 "line": line_number
             }
             validate_zone = Zone_Approval.model_validate(zone_data)
+            if zone_data.get("name") in self.used_hub:
+                original_line = self.used_hub[parts[0]]
+                raise ValueError(f"--- line {line_number} --- \n"
+                                 "Duplicate hub with "
+                                 f"line {original_line}")
+            else:
+                self.used_hub[parts[0]] = line_number
+
             coords: tuple[int, int] = (
                 validate_zone.x, validate_zone.y)
 

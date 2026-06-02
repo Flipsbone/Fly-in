@@ -1,0 +1,9 @@
+                    if value_str not in self.used_name_hub:
+                        print(value_str)
+                        self.used_name_hub[value_str] = i
+                        self._parse_hub(keyword, value_str, clean_line, i)
+                    else:
+                        original_line = self.used_name_hub[value_str]
+                        raise ValueError(f"--- line {i} --- \n"
+                                         "Duplicate hub with "
+                                         f"line {original_line}")
