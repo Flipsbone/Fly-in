@@ -283,8 +283,17 @@ class MapParser:
         if self.start_node is None or self.end_node is None:
             raise ValueError("Parsing error: start_hub or "
                              "end_hub nodes were not properly initialized")
-
+        if self.start_node.max_drones != self.nb_drones:
+            print("\nWarning: The maximum number of drones at the "
+                  f"start_node:{self.start_node.max_drones} differs from"
+                  f" the nb_drones quantity: {self.nb_drones}. "
+                  f"The maximum value has been updated to {self.nb_drones}.")
         self.start_node.max_drones = self.nb_drones
+        if self.end_node.max_drones != self.nb_drones:
+            print("\nWarning: The maximum number of drones at the "
+                  f"end_node:{self.end_node.max_drones} differs from"
+                  f" the nb_drones quantity: {self.nb_drones}. "
+                  f"The maximum value has been updated to {self.nb_drones}.")
         self.end_node.max_drones = self.nb_drones
 
         return self.start_node, self.end_node

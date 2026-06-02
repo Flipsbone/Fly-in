@@ -14,6 +14,7 @@ def display_terminal(drone_paths: dict[int, list[str]],
 
     max_turn: int = max(len(path) for path in drone_paths.values())
     drone_moved: dict[int, int] = {}
+    print()
     for turn in range(1, max_turn):
         line_output: list[str] = []
         for drone_id, path in drone_paths.items():

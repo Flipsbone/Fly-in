@@ -82,12 +82,12 @@ class Zone_Approval(BaseModel):
 
             match key:
                 case "color":
-                    value_isalpha: bool = value_str.isalnum()
-                    if not value_isalpha:
+                    value_isalnum: bool = value_str.replace("_", "0").isalnum()
+                    if not value_isalnum:
                         raise ValueError(f"metadata value after '=' is "
                                          f" '{value_str} ' the format must"
                                          " be 'color=green' and the color"
-                                         " must be single word strings"
+                                         " must be a single word strings"
                                          " (e.g., red, blue, gray).")
 
                     zone_metadata[key] = value_str
@@ -108,7 +108,6 @@ class Zone_Approval(BaseModel):
                     if val_int < 0:
                         raise ValueError(f"metadata value: '{value_str}' "
                                          "must be >= 0")
-
                     zone_metadata[key] = val_int
 
         data.update(zone_metadata)

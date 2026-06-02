@@ -49,8 +49,11 @@ class PathFinder:
             for neighbor_name in self.graph.nodes[current].neighbors:
                 if neighbor_name not in visited:
                     visited.add(neighbor_name)
-                    if self.graph.nodes[neighbor_name].zone_type != "blocked":
-                        queue.append(neighbor_name)
+                    if self.graph.nodes[current].neighbors[neighbor_name] != 0:
+                        if self.graph.nodes[neighbor_name].max_drones != 0:
+                            if (self.graph.nodes[neighbor_name].zone_type !=
+                                    "blocked"):
+                                queue.append(neighbor_name)
         return False
 
     def _reconstruct_path(
