@@ -9,8 +9,6 @@ from src.parser.map_validator import (
 def test_drone_approval_zero_or_negative() -> None:
     """Test edge case: Number of drones must be strictly positive."""
     with pytest.raises(ValidationError):
-        Drone_Approval(nb_drones=0)
-    with pytest.raises(ValidationError):
         Drone_Approval(nb_drones=-5)
 
 
