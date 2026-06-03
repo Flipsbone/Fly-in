@@ -4,7 +4,7 @@ from typing import Any
 
 class Drone_Approval(BaseModel):
     """Validation model for the drone count."""
-    nb_drones: int = Field(ge=1)
+    nb_drones: int = Field(ge=0)
 
 
 class Zone_Approval(BaseModel):
