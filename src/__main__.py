@@ -27,7 +27,7 @@ def display_terminal(drone_paths: dict[int, list[str]],
         if line_output:
             print(" ".join(line_output))
     sum_turn: int = sum(turn for turn in drone_turn.values())
-    print(f"\nThe average number of turns per drone {sum_turn/drone_id}\n")
+    print(f"\nThe average number of turns per drone is {sum_turn/drone_id}\n")
     for turn_index, count in drone_moved.items():
         print(f"Number of drones moved at the turn {turn_index} is {count}")
 
